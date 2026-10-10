@@ -3,11 +3,11 @@ import { defineConfig } from 'vitepress'
 export default defineConfig({
   base: '/docs/',
   title: 'OpenCLI',
-  description: 'Make any website or Electron App your CLI — AI-powered, account-safe, self-healing.',
+  description: 'Make any website your CLI — AI-powered, account-safe, self-healing.',
 
   head: [
     ['meta', { property: 'og:title', content: 'OpenCLI Documentation' }],
-    ['meta', { property: 'og:description', content: 'Make any website or Electron App your CLI.' }],
+    ['meta', { property: 'og:description', content: 'Make any website your CLI.' }],
     ['meta', { name: 'twitter:card', content: 'summary_large_image' }],
   ],
 
@@ -33,7 +33,6 @@ export default defineConfig({
                 { text: 'Browser Bridge', link: '/guide/browser-bridge' },
                 { text: 'Remote Orchestration', link: '/guide/remote-orchestration' },
                 { text: 'Troubleshooting', link: '/guide/troubleshooting' },
-                { text: 'Add an Electron App CLI', link: '/guide/electron-app-cli' },
                 { text: 'Extending OpenCLI', link: '/guide/extending-opencli' },
                 { text: 'Plugins', link: '/guide/plugins' },
               ],
@@ -156,21 +155,6 @@ export default defineConfig({
                 { text: 'Steam', link: '/adapters/browser/steam' },
               ],
             },
-            {
-              text: 'Desktop Adapters',
-              collapsed: false,
-              items: [
-                { text: 'Cursor', link: '/adapters/desktop/cursor' },
-                { text: 'Trae CN', link: '/adapters/desktop/trae-cn' },
-                { text: 'Codex', link: '/adapters/desktop/codex' },
-                { text: 'Antigravity', link: '/adapters/desktop/antigravity' },
-                { text: 'ChatGPT', link: '/adapters/desktop/chatgpt' },
-                { text: 'ChatWise', link: '/adapters/desktop/chatwise' },
-                { text: 'Discord', link: '/adapters/desktop/discord' },
-                { text: 'Doubao App', link: '/adapters/desktop/doubao-app' },
-                { text: 'Trae SOLO', link: '/adapters/desktop/trae-solo' },
-              ],
-            },
           ],
           '/developer/': [
             {
@@ -206,7 +190,6 @@ export default defineConfig({
               text: 'Advanced',
               items: [
                 { text: 'Chrome DevTools Protocol', link: '/advanced/cdp' },
-                { text: 'Electron Apps', link: '/advanced/electron' },
                 { text: 'Remote Chrome', link: '/advanced/remote-chrome' },
                 { text: 'Download Support', link: '/advanced/download' },
               ],
@@ -234,7 +217,6 @@ export default defineConfig({
                 { text: '快速开始', link: '/zh/guide/getting-started' },
                 { text: '安装', link: '/zh/guide/installation' },
                 { text: 'Browser Bridge', link: '/zh/guide/browser-bridge' },
-                { text: '给新 Electron 应用生成 CLI', link: '/zh/guide/electron-app-cli' },
                 { text: '扩展 OpenCLI', link: '/zh/guide/extending-opencli' },
                 { text: '插件', link: '/zh/guide/plugins' },
               ],

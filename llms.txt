@@ -1,6 +1,6 @@
 # OpenCLI
 
-> Make any website or Electron app your CLI. Zero setup. AI-powered.
+> Make any website your CLI. Zero setup. AI-powered.
 > Convert any website into a deterministic CLI command. Reuse your Chrome login — no tokens, no API keys.
 
 ## What OpenCLI does
@@ -27,7 +27,6 @@ Requires Node.js >= 20.
 - **Zero LLM cost at runtime** — no tokens consumed, runs deterministically
 - **Account safe** — reuses Chrome's logged-in state, credentials never leave the browser
 - **Deterministic** — same command, same output schema, every time. Pipeable, CI-friendly
-- **Desktop app control** — drive Electron apps (Cursor, Codex, ChatGPT App, Discord) via CDP
 - **Plugin system** — `opencli plugin install github:user/repo`
 - **Multiple output formats** — JSON, CSV, Markdown, YAML, table
 
@@ -45,10 +44,6 @@ Install with: `npx skills add jackwener/opencli`
 Twitter/X, Xiaohongshu, Bilibili, Zhihu, LinkedIn, YouTube, Reddit, HackerNews, Weibo, Amazon, Bloomberg, V2EX, Boss直聘, Douyin, Spotify, WeChat, Xiaoyuzhou, NotebookLM, Claude, Gemini, GeoGebra, xueqiu, zlibrary, upwork, 1688, pixiv, and 80+ more.
 
 Full list: https://github.com/jackwener/opencli/blob/main/docs/adapters/index.md
-
-## Desktop app adapters
-
-Cursor, Trae CN, Codex, Antigravity, ChatGPT App, ChatWise, Discord, Doubao, Trae SOLO — controlled via Chrome DevTools Protocol (CDP).
 
 ## Configuration
 

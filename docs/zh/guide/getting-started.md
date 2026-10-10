@@ -1,9 +1,9 @@
 # 快速开始
 
-> **让任何网站或 Electron 应用成为你的 CLI。**
-> 零风险 · 复用 Chrome 登录态 · AI 驱动发现 · 浏览器 + 桌面自动化
+> **让任何网站成为你的 CLI。**
+> 零风险 · 复用 Chrome 登录态 · AI 驱动发现 · 浏览器自动化
 
-OpenCLI 将**任何网站**或 **Electron 应用**变成命令行界面 — Bilibili、知乎、小红书、Twitter/X、Reddit、YouTube、Antigravity 等 — 基于浏览器会话复用和 AI 原生发现。
+OpenCLI 将**任何网站**变成命令行界面 — Bilibili、知乎、小红书、Twitter/X、Reddit、YouTube 等 — 基于浏览器会话复用和 AI 原生发现。
 
 ## 安装
 
@@ -60,4 +60,3 @@ opencli bilibili [Tab] # 补全命令（hot、search、me、download...）
 - [扩展 OpenCLI：自定义命令和 plugin](/zh/guide/extending-opencli)
 - [所有适配器](/zh/adapters/)
 - [开发者指南](/zh/developer/contributing)
-- [给新 Electron 应用生成 CLI](/zh/guide/electron-app-cli)

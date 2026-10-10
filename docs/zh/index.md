@@ -3,8 +3,8 @@ layout: home
 
 hero:
   name: OpenCLI
-  text: 让任何网站或 Electron 应用成为你的 CLI
-  tagline: 零风险 · 复用 Chrome 登录态 · AI 驱动发现 · 浏览器 + 桌面自动化
+  text: 让任何网站成为你的 CLI
+  tagline: 零风险 · 复用 Chrome 登录态 · AI 驱动发现 · 浏览器自动化
   actions:
     - theme: brand
       text: 快速开始
@@ -14,9 +14,6 @@ hero:
       link: https://github.com/jackwener/opencli
 
 features:
-  - icon: 🖥️
-    title: 桌面应用控制
-    details: 通过 CDP 直接在终端驱动 Electron 应用（Cursor、Codex、ChatGPT 等）。
   - icon: 🌐
     title: 浏览器自动化
     details: AI Agent 直接控制浏览器：点击、输入、提取、截图 — 任何交互，完全可编程。

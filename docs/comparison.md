@@ -6,7 +6,7 @@ OpenCLI occupies a specific niche in the browser automation ecosystem. This guid
 
 | Tool | Approach | Best for |
 |------|----------|----------|
-| **opencli** | Pre-built TypeScript adapters | Deterministic site commands, broad platform coverage, desktop apps |
+| **opencli** | Pre-built TypeScript adapters | Deterministic site commands, broad platform coverage |
 | **Browser-Use** | LLM-driven browser control | General-purpose AI browser automation |
 | **Crawl4AI** | Async web crawler | Large-scale data crawling |
 | **Firecrawl** | Scraping API / self-hosted | Clean markdown extraction, managed or self-hosted infrastructure |
@@ -69,17 +69,6 @@ OpenCLI occupies a specific niche in the browser automation ecosystem. This guid
 
 **opencli is not the right tool here.** If you need to explore unknown websites or handle one-off tasks on sites without adapters, use an LLM-driven browser tool. opencli trades generality for determinism and cost.
 
-### 5. Desktop App Control
-
-> "I want to script Cursor, ChatGPT, or other Electron apps from the terminal."
-
-| Tool | Fit | Notes |
-|------|-----|-------|
-| **opencli** | Best | 7 desktop adapters via CDP + AppleScript. The only CLI tool with this capability. |
-| All others | N/A | Browser automation tools cannot control desktop applications. |
-
-**This is unique to opencli.** No other tool in this comparison can send a prompt to ChatGPT desktop or extract code from Cursor via CLI.
-
 ## Key Trade-offs
 
 ### opencli's Strengths
@@ -88,7 +77,6 @@ OpenCLI occupies a specific niche in the browser automation ecosystem. This guid
 - **Deterministic output** — Same command always returns the same schema. Pipeable, scriptable, CI-friendly.
 - **Speed** — Adapter commands return in seconds, not minutes.
 - **Broad platform coverage** — 100+ registered site surfaces spanning global platforms (Reddit, HackerNews, Twitter, YouTube) and Chinese platforms (Bilibili, Zhihu, Xiaohongshu, Douban, Weibo) with adapters that understand local anti-bot patterns.
-- **Desktop app control** — CDP adapters for Cursor, Codex, ChatGPT, Discord, and more.
 - **Easy to extend** — Drop a `.js` adapter into the `clis/` folder for auto-registration. Contributing a new site adapter is straightforward.
 
 ### opencli's Limitations

@@ -3,8 +3,8 @@ layout: home
 
 hero:
   name: OpenCLI
-  text: Make any website or Electron App your CLI
-  tagline: Zero risk · Reuse Chrome login · AI-powered discovery · Browser + Desktop automation
+  text: Make any website your CLI
+  tagline: Zero risk · Reuse Chrome login · AI-powered discovery · Browser automation
   actions:
     - theme: brand
       text: Get Started
@@ -14,9 +14,6 @@ hero:
       link: https://github.com/jackwener/opencli
 
 features:
-  - icon: 🖥️
-    title: Desktop App Control
-    details: Drive Electron apps (Cursor, Codex, ChatGPT, etc.) directly from the terminal via CDP.
   - icon: 🌐
     title: Browser Automation
     details: "AI agents get direct browser control: click, type/fill, extract, screenshot — any interaction, fully scriptable."
