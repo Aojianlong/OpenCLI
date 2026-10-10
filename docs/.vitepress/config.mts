@@ -11,7 +11,7 @@ export default defineConfig({
     ['meta', { name: 'twitter:card', content: 'summary_large_image' }],
   ],
 
-  sitemap: { hostname: 'https://opencli.info' },
+  sitemap: { hostname: 'https://opencli.info/docs/' },
 
   locales: {
     root: {
