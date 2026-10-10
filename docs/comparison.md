@@ -1,12 +1,12 @@
 # Comparison Guide
 
-OpenCLI occupies a specific niche in the browser automation ecosystem. This guide honestly evaluates where opencli excels, where it's a viable option, and where other tools are a better fit.
+OpenCLI combines general-purpose browser automation with reusable site adapters. This guide evaluates where opencli excels, where it's a viable option, and where other tools are a better fit.
 
 ## At a Glance
 
 | Tool | Approach | Best for |
 |------|----------|----------|
-| **opencli** | Pre-built TypeScript adapters | Deterministic site commands, broad platform coverage, desktop apps |
+| **opencli** | General-purpose browser primitives + reusable site adapters | AI agent browsing, deterministic site commands, desktop apps |
 | **Browser-Use** | LLM-driven browser control | General-purpose AI browser automation |
 | **Crawl4AI** | Async web crawler | Large-scale data crawling |
 | **Firecrawl** | Scraping API / self-hosted | Clean markdown extraction, managed or self-hosted infrastructure |
@@ -65,9 +65,9 @@ OpenCLI occupies a specific niche in the browser automation ecosystem. This guid
 | Stagehand | Best | Clean API for `act()`, `extract()`, `observe()` on any page. |
 | agent-browser | Good | Token-efficient primitives for AI agents. |
 | Skyvern | Good | Visual AI that generalizes across sites. |
-| **opencli** | Poor | Only works with sites that have pre-built adapters. Cannot handle arbitrary websites. |
+| **opencli** | Good | General-purpose `opencli browser` primitives let agents navigate, click, fill forms, extract content, and inspect sites without adapters. |
 
-**opencli is not the right tool here.** If you need to explore unknown websites or handle one-off tasks on sites without adapters, use an LLM-driven browser tool. opencli trades generality for determinism and cost.
+**opencli supports this directly.** An AI agent can use the `opencli-browser` skill and `opencli browser` primitives to explore unknown websites and carry out multi-step tasks through your logged-in browser. No pre-built adapter is required. For recurring workflows, an adapter packages those operations into a reusable, deterministic command.
 
 ### 5. Desktop App Control
 
@@ -84,8 +84,9 @@ OpenCLI occupies a specific niche in the browser automation ecosystem. This guid
 
 ### opencli's Strengths
 
-- **Zero LLM cost** — No tokens consumed at runtime. Run 10,000 times for free.
-- **Deterministic output** — Same command always returns the same schema. Pipeable, scriptable, CI-friendly.
+- **General-purpose browser automation** — Agents can operate websites through `opencli browser` primitives without writing or installing a site adapter.
+- **No built-in LLM dependency** — Adapter commands and browser primitives run without LLM inference. An AI agent driving the browser still incurs its own model costs.
+- **Deterministic adapter output** — Adapter commands provide structured schemas. Pipeable, scriptable, CI-friendly.
 - **Speed** — Adapter commands return in seconds, not minutes.
 - **Broad platform coverage** — 100+ registered site surfaces spanning global platforms (Reddit, HackerNews, Twitter, YouTube) and Chinese platforms (Bilibili, Zhihu, Xiaohongshu, Douban, Weibo) with adapters that understand local anti-bot patterns.
 - **Desktop app control** — CDP adapters for Cursor, Codex, ChatGPT, Discord, and more.
@@ -93,26 +94,24 @@ OpenCLI occupies a specific niche in the browser automation ecosystem. This guid
 
 ### opencli's Limitations
 
-- **Coverage requires adapters** — opencli only works with sites that have pre-built adapters. Adding a new site means writing a TypeScript adapter.
+- **Ready-made command coverage varies** — Site-specific commands require adapters, but general browser automation does not. Use `opencli browser` on sites without adapters, and add an adapter when a workflow needs a reusable command.
 - **Adapter maintenance** — When a website updates its DOM or API, the corresponding adapter may need updating. The community maintains these, but breakage is possible.
-- **Not general-purpose** — Cannot handle arbitrary websites. For unknown sites, pair opencli with a general browser tool as a fallback.
+- **Browser workflows need orchestration** — For tasks without adapters, a script or AI agent must choose actions and handle page state using the browser primitives. General-purpose access does not make every workflow a single deterministic command.
 
-## Complementary Usage
+## Choosing a Workflow
 
-opencli works best alongside general-purpose browser tools, not as a replacement:
+Use opencli's adapters for ready-made commands and its general-purpose browser primitives for exploration or tasks without adapters:
 
 ```
-Has adapter?  ──yes──▶  opencli (fast, free, deterministic)
+Has adapter?  ──yes──▶  opencli <site> <command> (deterministic)
      │
      no
      │
      ▼
-One-off task?  ──yes──▶  Browser-Use / Stagehand (LLM-driven)
-     │
-     no
+Explore site / run task with opencli browser (script or AI agent)
      │
      ▼
-Recurring?    ──yes──▶  Write an opencli adapter, then use opencli
+Recurring?    ──yes──▶  Package the workflow as an opencli adapter
 ```
 
 ## Further Reading
