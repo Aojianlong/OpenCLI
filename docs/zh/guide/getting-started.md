@@ -5,10 +5,30 @@
 
 OpenCLI 将**任何网站**变成命令行界面 — Bilibili、知乎、小红书、Twitter/X、Reddit、YouTube 等 — 基于浏览器会话复用和 AI 原生发现。
 
+OpenCLI 是 **general-purpose browser automation CLI**，可以作为 agent-browser 的替代工具。操作陌生网站无需 adapter；adapters 用于可复用的站点命令。参见 [迁移指南](./agent-browser-alternative)。
+
 ## 安装
 
 ```bash
 npm install -g @jackwener/opencli
+```
+
+## 直接操作网页（无需 adapter）
+
+先完成 [Browser Bridge 设置](./browser-bridge)，然后运行：
+
+```bash
+opencli doctor
+opencli browser work open https://example.com
+opencli browser work state
+opencli browser work extract
+opencli browser work close
+```
+
+安装 `opencli-browser` skill，让 AI Agent 使用同一组 browser primitives：
+
+```bash
+npx skills add jackwener/opencli --skill opencli-browser
 ```
 
 ## 基本使用

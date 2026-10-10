@@ -1,6 +1,13 @@
+---
+title: OpenCLI Browser Automation Comparison
+description: Compare OpenCLI general-purpose browser automation and reusable adapters with agent-browser, Browser-Use, Stagehand, and other tools.
+---
+
 # Comparison Guide
 
 OpenCLI combines general-purpose browser automation with reusable site adapters. This guide evaluates where opencli excels, where it's a viable option, and where other tools are a better fit.
+
+**Looking for an agent-browser alternative?** OpenCLI supports the general-purpose browser loop without site adapters. See [OpenCLI vs agent-browser](./guide/agent-browser-alternative) for a workflow comparison and command migration guide.
 
 ## At a Glance
 
@@ -36,7 +43,7 @@ OpenCLI combines general-purpose browser automation with reusable site adapters.
 | Tool | Fit | Notes |
 |------|-----|-------|
 | **opencli** | Best | Structured JSON output, fast deterministic execution, hundreds of commands ready to use. |
-| agent-browser | Good | Token-efficient browser primitives, but requires LLM reasoning for every step. |
+| agent-browser | Good | Browser primitives for agent-driven workflows; the caller orchestrates actions. |
 | Browser-Use | Viable | General-purpose, but each operation costs tokens and takes 10-60s. |
 | Stagehand | Viable | Good DX, but same LLM-per-action cost model. |
 

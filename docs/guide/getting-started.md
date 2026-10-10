@@ -9,14 +9,16 @@
 
 OpenCLI turns **any website** into a command-line interface — Bilibili, Zhihu, 小红书, Twitter/X, Reddit, YouTube, and [many more](/adapters/) — powered by browser session reuse and AI-native discovery.
 
+OpenCLI is a **general-purpose browser automation CLI** and an agent-browser alternative. Browse unfamiliar sites without adapters; use adapters for reusable site commands. See the [migration guide](./agent-browser-alternative).
+
 ## Highlights
 
 - **Browser Automation** — `browser` gives AI agents direct browser control: click, type/fill, extract, screenshot — fully scriptable.
 - **Website → CLI** — Turn any website into a deterministic CLI: 100+ site surfaces are already registered, or author your own with the `opencli-adapter-author` skill.
 - **Account-safe** — Reuses Chrome's logged-in state; your credentials never leave the browser.
 - **AI Agent ready** — `opencli browser *` primitives (`open` / `network` / `state` / `eval` / `init` / `verify`) drive the adapter-authoring loop.
-- **Zero LLM cost** — No tokens consumed at runtime. Run 10,000 times and pay nothing.
-- **Deterministic** — Same command, same output schema, every time. Pipeable, scriptable, CI-friendly.
+- **No built-in LLM dependency** — Commands run without LLM inference; an AI agent orchestrating actions still has its own model costs.
+- **Deterministic adapters** — Site commands provide structured output schemas. Pipeable, scriptable, CI-friendly.
 
 ## Quick Start
 
@@ -24,6 +26,24 @@ OpenCLI turns **any website** into a command-line interface — Bilibili, Zhihu,
 
 ```bash
 npm install -g @jackwener/opencli
+```
+
+### Browse without a site adapter
+
+Set up [Browser Bridge](./browser-bridge), then run:
+
+```bash
+opencli doctor
+opencli browser work open https://example.com
+opencli browser work state
+opencli browser work extract
+opencli browser work close
+```
+
+Install the `opencli-browser` skill so your AI agent can use the same browser primitives:
+
+```bash
+npx skills add jackwener/opencli --skill opencli-browser
 ```
 
 ### Basic Usage

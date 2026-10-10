@@ -9,6 +9,8 @@
 [![Node.js Version](https://img.shields.io/node/v/@jackwener/opencli?style=flat-square)](https://nodejs.org)
 [![License](https://img.shields.io/npm/l/@jackwener/opencli?style=flat-square)](./LICENSE)
 
+OpenCLI 是 **general-purpose browser automation CLI**，可以作为 **agent-browser 的替代工具**。导航、检查页面、点击、填表、提取和截图无需 site adapter；内置 adapters 为重复任务提供可复用的确定性命令。参见 [OpenCLI vs agent-browser 与迁移指南](./docs/zh/guide/agent-browser-alternative.md)。
+
 OpenCLI 可以用同一套 CLI 做三类事情：
 
 - **直接使用现成适配器**：B站、知乎、小红书、Twitter/X、Reddit、HackerNews 等 [100+ 站点](#内置命令) 开箱即用。

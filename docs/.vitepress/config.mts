@@ -3,13 +3,15 @@ import { defineConfig } from 'vitepress'
 export default defineConfig({
   base: '/docs/',
   title: 'OpenCLI',
-  description: 'Make any website your CLI — AI-powered, account-safe, self-healing.',
+  description: 'General-purpose browser automation for AI agents, with reusable site commands.',
 
   head: [
     ['meta', { property: 'og:title', content: 'OpenCLI Documentation' }],
-    ['meta', { property: 'og:description', content: 'Make any website your CLI.' }],
+    ['meta', { property: 'og:description', content: 'General-purpose browser automation for AI agents. Browse without site adapters; reuse commands for recurring tasks.' }],
     ['meta', { name: 'twitter:card', content: 'summary_large_image' }],
   ],
+
+  sitemap: { hostname: 'https://opencli.info' },
 
   locales: {
     root: {
@@ -30,6 +32,7 @@ export default defineConfig({
                 { text: 'Getting Started', link: '/guide/getting-started' },
                 { text: 'Installation', link: '/guide/installation' },
                 { text: 'Comparison', link: '/comparison' },
+                { text: 'OpenCLI vs agent-browser', link: '/guide/agent-browser-alternative' },
                 { text: 'Browser Bridge', link: '/guide/browser-bridge' },
                 { text: 'Remote Orchestration', link: '/guide/remote-orchestration' },
                 { text: 'Troubleshooting', link: '/guide/troubleshooting' },
@@ -216,6 +219,7 @@ export default defineConfig({
               items: [
                 { text: '快速开始', link: '/zh/guide/getting-started' },
                 { text: '安装', link: '/zh/guide/installation' },
+                { text: '替代 agent-browser', link: '/zh/guide/agent-browser-alternative' },
                 { text: 'Browser Bridge', link: '/zh/guide/browser-bridge' },
                 { text: '扩展 OpenCLI', link: '/zh/guide/extending-opencli' },
                 { text: '插件', link: '/zh/guide/plugins' },
