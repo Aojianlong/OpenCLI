@@ -4,7 +4,8 @@ cli({
     name: 'search',
     access: 'read',
     description: 'Search Reddit Posts',
-    domain: 'reddit.com',
+    domain: 'www.reddit.com',
+    navigateBefore: 'https://www.reddit.com',
     strategy: Strategy.COOKIE,
     browser: true,
     args: [
