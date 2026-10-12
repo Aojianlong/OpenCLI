@@ -21,10 +21,10 @@ describe('output TTY detection', () => {
 
   it.each([['yml', 'yaml'], ['markdown', 'md']])('preserves the %s alias', (alias, canonical) => {
     render([{ value: 'hello' }], { fmt: alias });
-    const aliasOutput = logSpy.mock.calls.map(call => call[0]);
+    const aliasOutput = logSpy.mock.calls.map((call: unknown[]) => call[0]);
     logSpy.mockClear();
     render([{ value: 'hello' }], { fmt: canonical });
-    expect(logSpy.mock.calls.map(call => call[0])).toEqual(aliasOutput);
+    expect(logSpy.mock.calls.map((call: unknown[]) => call[0])).toEqual(aliasOutput);
   });
 
   it('outputs YAML in non-TTY when format is default table', () => {
