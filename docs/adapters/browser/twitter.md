@@ -58,7 +58,7 @@ opencli twitter search "react 19"
 opencli twitter search "react 19" --filter live
 
 # Get following/followers list (supports large limits)
-# Rows carry `verified` (blue check); search/timeline/thread rows carry `author_verified`
+# Rows carry `verified` (X Premium or legacy verification); search/timeline/thread rows carry `author_verified`
 opencli twitter following @elonmusk --limit 200
 opencli twitter followers @elonmusk --limit 100
 opencli twitter followers @elonmusk --limit 100 -f json | jq '.[] | select(.verified)'

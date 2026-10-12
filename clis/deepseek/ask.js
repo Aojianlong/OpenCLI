@@ -20,7 +20,7 @@ export const askCommand = cli({
         { name: 'prompt', positional: true, required: true, help: 'Prompt to send' },
         { name: 'timeout', type: 'int', default: 120, help: 'Max seconds to wait for response' },
         { name: 'new', type: 'boolean', default: false, help: 'Start a new chat before sending' },
-        { name: 'model', default: 'instant', choices: ['instant', 'expert', 'vision'], help: 'Model to use: instant, expert, or vision' },
+        { name: 'model', choices: ['instant', 'expert', 'vision'], help: 'Explicitly select a model; omitted uses the current DeepSeek model' },
         { name: 'think', type: 'boolean', default: false, help: 'Enable DeepThink mode' },
         { name: 'search', type: 'boolean', default: false, help: 'Enable web search' },
         { name: 'file', help: 'Attach a file (PDF, image, text) with the prompt' },

@@ -1200,7 +1200,10 @@ export async function getVisibleMessages(page, { textOnly = false } = {}) {
         };
         const normalize = (value) => String(value || '').replace(/\\u00a0/g, ' ').replace(/[ \\t]+\\n/g, '\\n').replace(/\\n{3,}/g, '\\n\\n').trim();
         const roleOf = (node) => {
-            const attr = node.getAttribute('data-message-author-role') || node.getAttribute('data-author') || node.getAttribute('data-chatgpt-search-unit-key') || '';
+            const attr = node.getAttribute('data-message-author-role') || node.getAttribute('data-author') || '';
+            const searchKey = node.getAttribute('data-chatgpt-search-unit-key') || '';
+            if (/:assistant$/.test(searchKey)) return 'Assistant';
+            if (/:user$/.test(searchKey)) return 'User';
             if (/assistant/i.test(attr)) return 'Assistant';
             if (/user/i.test(attr)) return 'User';
             const testid = node.getAttribute('data-testid') || '';
@@ -1228,6 +1231,9 @@ export async function getVisibleMessages(page, { textOnly = false } = {}) {
                 || node.querySelector('.markdown')
                 || node.querySelector('[data-message-author-role]')
                 || node;
+            // Deduplicate overlapping markup by node identity, preserving repeated turns.
+            if (seen.has(contentNode)) continue;
+            seen.add(contentNode);
             // Tool chips ("Web search", "Deep research") render inside the user prompt; drop them so it matches the sent text.
             if (role === 'User' && contentNode.querySelector('[data-prompt-link-href]')) {
                 contentNode = contentNode.cloneNode(true);
@@ -1239,9 +1245,6 @@ export async function getVisibleMessages(page, { textOnly = false } = {}) {
                 : '';
             const text = normalize(rawText);
             if (!text) continue;
-            const key = role + '\\n' + text;
-            if (seen.has(key)) continue;
-            seen.add(key);
             rows.push({ role, text, html });
         }
         return rows;

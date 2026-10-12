@@ -2161,6 +2161,27 @@ describe('chatgpt project file upload helper', () => {
 });
 
 describe('chatgpt October 2026 redesign markup', () => {
+    it('keeps identical turns while deduplicating nested markup and reading the role suffix', async () => {
+        const page = createDomEvaluatePage([0, 1].map(index => `
+            <article data-testid="conversation-turn-${index}" data-chatgpt-search-unit-key="assistant-topic-${index}:user">
+                <div data-message-author-role="user"><div class="markdown">Again</div></div>
+            </article>
+            <article data-chatgpt-search-unit-key="turn-${index}:assistant">
+                <div data-message-author-role="assistant"><div class="markdown">Same answer</div></div>
+            </article>
+        `).join(''));
+        for (const node of page.dom.window.document.querySelectorAll('*')) {
+            node.getBoundingClientRect = () => ({ width: 120, height: 36 });
+        }
+        try {
+            const rows = await getVisibleMessages(page, { textOnly: true });
+            expect(rows.map(row => [row.Role, row.Text])).toEqual([
+                ['User', 'Again'], ['Assistant', 'Same answer'],
+                ['User', 'Again'], ['Assistant', 'Same answer'],
+            ]);
+        } finally { page.dom.window.close(); }
+    });
+
     it('reads search-unit turns and strips tool chips from the user prompt', async () => {
         const page = createDomEvaluatePage(`
             <div data-chatgpt-search-unit-key="fallback-turn-0:0:user">

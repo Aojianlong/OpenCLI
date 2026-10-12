@@ -89,7 +89,7 @@ cli({
     ],
     // The GraphQL payload also carries per-user relationship counts; use
     // `twitter profile` when a dedicated follower count is needed. `verified`
-    // is the blue check (X Premium / legacy verification).
+    // is true for X Premium or legacy verification.
     columns: ['screen_name', 'name', 'bio', 'verified'],
     func: async (page, kwargs) => {
         const limit = kwargs.limit;
