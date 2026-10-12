@@ -41,10 +41,10 @@ describe('Error type hierarchy', () => {
     expect(err.hint).toContain('https://bilibili.com');
   });
 
-  it('AuthRequiredError accepts custom message', () => {
-    const err = new AuthRequiredError('x.com', 'No ct0 cookie found');
+  it('AuthRequiredError preserves a custom message and recovery hint in the error envelope', () => {
+    const err = new AuthRequiredError('x.com', 'No ct0 cookie found', 'Run opencli x login-api');
     expect(err.message).toBe('No ct0 cookie found');
-    expect(err.hint).toContain('https://x.com');
+    expect(toEnvelope(err).error).toMatchObject({ code: 'AUTH_REQUIRED', help: 'Run opencli x login-api', exitCode: 77 });
   });
 
   it('TimeoutError has correct code and hint', () => {
