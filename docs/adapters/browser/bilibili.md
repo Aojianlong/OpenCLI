@@ -100,6 +100,8 @@ opencli bilibili hot -v
 
 ## Notes
 
+- `subtitle` includes the selected track's `language` and `track_type` on every row. `track_type` is `ai` for an AI-marked track, `cc` for an explicitly non-AI track, and `unknown` when the source does not identify the track type.
+
 - `opencli bilibili feed` without `uid` reads your following feed
 - `opencli bilibili feed <uid-or-name>` reads a specific user's dynamics
 - `opencli bilibili favorite` defaults to the first favorite folder when `--fid` is omitted

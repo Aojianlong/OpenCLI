@@ -369,11 +369,17 @@ function buildApplySearchFiltersJs(requestedFilters) {
         const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
         const text = (element) => (element?.textContent || '').replace(/\\s+/g, '').trim();
         const visible = (element) => {
-          if (!element) return false;
+          if (!element || element.closest('[aria-hidden="true"], [hidden], [inert]')) return false;
           const rect = element.getBoundingClientRect();
-          const style = getComputedStyle(element);
-          return rect.width > 0 && rect.height > 0 &&
-            style.display !== 'none' && style.visibility !== 'hidden';
+          if (rect.width <= 0 || rect.height <= 0) return false;
+          // A measurable box can still be a transparent instrumentation clone.
+          // Check ancestors too; retain the unique-match guard for real controls.
+          for (let node = element; node; node = node.parentElement) {
+            const style = getComputedStyle(node);
+            if (style.display === 'none' || style.visibility === 'hidden' ||
+                (style.opacity !== '' && Number(style.opacity) < 0.01)) return false;
+          }
+          return true;
         };
         const visibleMatches = (root, selector) =>
           Array.from(root.querySelectorAll(selector)).filter(visible);

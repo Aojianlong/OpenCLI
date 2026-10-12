@@ -145,13 +145,18 @@ function createFilterBehaviorPage(options = {}) {
             container.className = 'tag-container';
             for (const choice of choices) {
                 if (options.missing === `${groupLabel}/${choice}`) continue;
-                const copies = options.ambiguous === `${groupLabel}/${choice}` ? 2 : 1;
+                const copies = options.ghosts || options.ambiguous === `${groupLabel}/${choice}` ? 2 : 1;
                 for (let copy = 0; copy < copies; copy++) {
                     const option = document.createElement('div');
                     option.className = `tags${state[groupLabel] === choice ? ' active' : ''}`;
                     const optionLabel = document.createElement('span');
                     optionLabel.textContent = choice;
                     option.append(optionLabel);
+                    if (options.ghosts && copy === 0) {
+                        if (options.ghosts !== 'opacity') option.setAttribute('aria-hidden', 'true');
+                        if (options.ghosts !== 'aria') option.style.opacity = '0.00001';
+                        option.addEventListener('click', () => clicks.push('GHOST'));
+                    }
                     option.addEventListener('click', (event) => {
                         event.stopPropagation();
                         clicks.push(`${groupLabel}/${choice}`);
@@ -646,6 +651,19 @@ describe('xiaohongshu search', () => {
 });
 
 describe('xiaohongshu search filter behavior', () => {
+    it('ignores hidden overlapping clones for default and explicit filters without clicking them', async () => {
+        vi.useFakeTimers();
+        try {
+            for (const ghosts of ['aria', 'opacity', true]) {
+                const page = createFilterBehaviorPage({ ghosts });
+                await runFilterCommand(page, {});
+                await runFilterCommand(page, { sort: 'latest', 'note-type': 'video' });
+                expect(page.filterState).toMatchObject({ '排序依据': '最新', '笔记类型': '视频' });
+                expect(page.filterClicks).toEqual(['排序依据/最新', '笔记类型/视频']);
+            }
+        } finally { vi.useRealTimers(); }
+    });
+
     it('converges reused-tab state for filtered -> default and filter set A -> B', async () => {
         vi.useFakeTimers();
         try {

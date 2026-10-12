@@ -1669,6 +1669,23 @@ describe('chatgpt generated image detection', () => {
 });
 
 describe('chatgpt image upload helper', () => {
+    it('recognizes exact visible attachment labels inside the composer, not history or hidden chips', async () => {
+        const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'opencli-chatgpt-'));
+        tempDirs.push(dir);
+        const filePath = path.join(dir, 'cat.png');
+        fs.writeFileSync(filePath, 'fake-png');
+        for (const state of ['ready', 'hidden', 'wrong-name', 'history']) {
+            const dom = new JSDOM(`<main><section id="history"></section><form><div role="group" aria-label="${state === 'wrong-name' ? 'not-cat.png' : 'cat.png'}" style="${state === 'hidden' ? 'display:none' : ''}"></div><div id="prompt-textarea" contenteditable="true"></div></form></main>`, { url: 'https://chatgpt.com/new', runScripts: 'outside-only' });
+            const chip = dom.window.document.querySelector('[role="group"]');
+            chip.getBoundingClientRect = () => ({ width: 100, height: 30 });
+            if (state === 'history') dom.window.document.querySelector('#history').append(chip);
+            const page = { setFileInput: vi.fn(), wait: vi.fn(), sleep: vi.fn(), evaluate: vi.fn(script => dom.window.eval(script)) };
+            const result = await uploadChatGPTImages(page, [filePath]);
+            expect(result.ok, state).toBe(state === 'ready');
+            dom.window.close();
+        }
+    });
+
     it('validates local images without a browser page', async () => {
         const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'opencli-chatgpt-'));
         tempDirs.push(dir);

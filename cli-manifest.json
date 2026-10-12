@@ -3236,7 +3236,9 @@
       "index",
       "from",
       "to",
-      "content"
+      "content",
+      "language",
+      "track_type"
     ],
     "type": "js",
     "modulePath": "bilibili/subtitle.js",

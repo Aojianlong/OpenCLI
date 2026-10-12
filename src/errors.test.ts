@@ -51,7 +51,8 @@ describe('Error type hierarchy', () => {
     const err = new TimeoutError('bilibili/hot', 60);
     expect(err.code).toBe('TIMEOUT');
     expect(err.message).toBe('bilibili/hot timed out after 60s');
-    expect(err.hint).toContain('timeout');
+    expect(err.hint).toContain('OPENCLI_BROWSER_COMMAND_TIMEOUT');
+    expect(err.hint).not.toContain('--timeout');
   });
 
   it('ArgumentError has correct code', () => {

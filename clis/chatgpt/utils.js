@@ -2356,15 +2356,27 @@ async function waitForChatGPTUploadPreview(page, fileNames) {
         const ready = requireBooleanEvaluateResult(unwrapEvaluateResult(await page.evaluate(`
             (() => {
                 const names = ${namesJson};
-                const text = document.body ? (document.body.innerText || '') : '';
-                const matchedNames = names.filter(name => text.includes(name)).length;
-                if (matchedNames >= names.length) return true;
-
                 const composer = document.querySelector('[aria-label="Chat with ChatGPT"], [placeholder="Ask anything"], #prompt-textarea');
+                if (!composer) return false;
                 let root = composer;
-                for (let i = 0; i < 6 && root && root.parentElement; i += 1) root = root.parentElement;
-                const scope = root || document.body;
-                if (!scope) return false;
+                for (let i = 0; i < 6 && root.parentElement; i += 1) root = root.parentElement;
+                const scope = composer.closest('form') || root;
+                const text = scope.innerText || '';
+                if (names.every(name => text.includes(name))) return true;
+
+                // Some attachment chips expose their filename only as an accessible name.
+                // Match the exact name in the composer, not a historical message or control.
+                const chips = Array.from(scope.querySelectorAll('[role="group"][aria-label]')).filter(node => {
+                    if (node.closest('[hidden], [aria-hidden="true"]')) return false;
+                    const rect = node.getBoundingClientRect();
+                    if (rect.width <= 0 || rect.height <= 0) return false;
+                    for (let ancestor = node; ancestor; ancestor = ancestor.parentElement) {
+                        const style = getComputedStyle(ancestor);
+                        if (style.display === 'none' || style.visibility === 'hidden' || style.opacity === '0') return false;
+                    }
+                    return true;
+                });
+                if (names.every(name => chips.some(node => node.getAttribute('aria-label') === name))) return true;
 
                 const isVisibleMedia = (node) => {
                     if (!(node instanceof HTMLElement)) return false;
