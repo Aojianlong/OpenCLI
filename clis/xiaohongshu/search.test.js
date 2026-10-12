@@ -1103,9 +1103,10 @@ describe('search readiness before body creation', () => {
         const dom = new JSDOM('<html></html>', { runScripts: 'outside-only' });
         dom.window.document.body.remove();
         let expire;
-        dom.window.setTimeout = callback => { expire = callback; return 1; };
+        dom.window.setTimeout = vi.fn(callback => { expire = callback; return 1; });
         try {
             const pending = dom.window.eval(__test__.WAIT_FOR_CONTENT_JS);
+            expect(dom.window.setTimeout).toHaveBeenCalledWith(expect.any(Function), 20_000);
             expect(expire).toBeTypeOf('function');
             expire();
             await expect(pending).resolves.toBe('timeout');

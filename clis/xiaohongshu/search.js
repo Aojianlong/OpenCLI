@@ -8,8 +8,9 @@
 import { cli, Strategy } from '@jackwener/opencli/registry';
 import { ArgumentError, AuthRequiredError, CliError, CommandExecutionError, EmptyResultError, TimeoutError } from '@jackwener/opencli/errors';
 import { unwrapEvaluateResult } from './shared.js';
+const CONTENT_WAIT_SECONDS = 20;
 /**
- * Wait for search results or login wall using MutationObserver (max 5s).
+ * Wait for search results or login wall using MutationObserver (max 20s).
  * Returns 'content' if note items appeared, a typed wall state when login or
  * risk controls appear, or 'timeout' if none appears within the deadline.
  *
@@ -44,11 +45,10 @@ const WAIT_FOR_CONTENT_JS = `
     });
     // Document exists before body parsing and survives body replacement.
     observer.observe(document, { childList: true, subtree: true });
-    timer = setTimeout(() => finish('timeout'), 5000);
+    timer = setTimeout(() => finish('timeout'), ${CONTENT_WAIT_SECONDS * 1000});
   })
 `;
 const DEFAULT_HARVEST_STEP = 900;
-const CONTENT_WAIT_SECONDS = 5;
 const FILTER_SETTLE_SECONDS = 8;
 
 const SEARCH_FILTERS = [
