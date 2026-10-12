@@ -64,6 +64,10 @@ jobs:
         if: runner.os == 'Linux'
         run: npm run check:typed-error-lint
 
+      - name: Verify CLI auth contracts with isolated site fixtures
+        if: runner.os == 'Linux'
+        run: npx vitest run --project e2e tests/e2e/auth-contract.test.ts
+
   # ── Unit tests (vitest shard) ──
   # PR: ubuntu + Node 22 only (fast feedback, 2 jobs).
   # Push to main/dev: full matrix for cross-platform/cross-version coverage (12 jobs).

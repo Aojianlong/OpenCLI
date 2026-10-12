@@ -24515,7 +24515,7 @@
     "name": "login",
     "description": "Open notebooklm login and wait until the browser session is authenticated",
     "access": "write",
-    "domain": "google.com",
+    "domain": "notebooklm.google.com",
     "strategy": "cookie",
     "browser": true,
     "args": [
@@ -24786,7 +24786,7 @@
     "name": "whoami",
     "description": "Show the current logged-in notebooklm account",
     "access": "read",
-    "domain": "google.com",
+    "domain": "notebooklm.google.com",
     "strategy": "cookie",
     "browser": true,
     "args": [],

@@ -42,6 +42,7 @@ export default defineConfig({
           include: [
             'tests/e2e/browser-public.test.ts',
             'tests/e2e/band-auth.test.ts',
+            'tests/e2e/auth-contract.test.ts',
             'tests/e2e/public-commands.test.ts',
             'tests/e2e/management.test.ts',
             'tests/e2e/output-formats.test.ts',

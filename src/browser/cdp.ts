@@ -17,6 +17,7 @@ import { buildEvaluateExpression } from './utils.js';
 import { generateStealthJs } from './stealth.js';
 import { waitForDomStableJs } from './dom-helpers.js';
 import { isRecord, saveBase64ToFile } from '../utils.js';
+import { CommandExecutionError } from '../errors.js';
 import { CDPBasePage } from './base-page.js';
 
 export interface CDPTarget {
@@ -242,8 +243,15 @@ class CDPPage extends CDPBasePage {
   }
 
   async getCookies(opts: { domain?: string; url?: string } = {}): Promise<BrowserCookie[]> {
-    const result = await this.bridge.send('Network.getCookies', opts.url ? { urls: [opts.url] } : {});
-    const cookies = isRecord(result) && Array.isArray(result.cookies) ? result.cookies : [];
+    // Network.getCookies without URLs is scoped to the current page, which may
+    // be on another site during a no-navigation auth check.
+    const result = opts.url
+      ? await this.bridge.send('Network.getCookies', { urls: [opts.url] })
+      : await this.bridge.send('Storage.getCookies', {});
+    if (!isRecord(result) || !Array.isArray(result.cookies) || !result.cookies.every(isCookie)) {
+      throw new CommandExecutionError('CDP returned an invalid cookies response');
+    }
+    const cookies = result.cookies;
     const domain = opts.domain;
     return domain
       ? cookies.filter((cookie): cookie is BrowserCookie => isCookie(cookie) && matchesCookieDomain(cookie.domain, domain))
@@ -472,7 +480,7 @@ function matchesCookieDomain(cookieDomain: string, targetDomain: string): boolea
   const normalizedCookieDomain = cookieDomain.replace(/^\./, '').toLowerCase();
   const normalizedTargetDomain = targetDomain.replace(/^\./, '').toLowerCase();
   return normalizedTargetDomain === normalizedCookieDomain
-    || normalizedTargetDomain.endsWith(`.${normalizedCookieDomain}`);
+    || normalizedCookieDomain.endsWith(`.${normalizedTargetDomain}`);
 }
 
 function selectCDPTarget(targets: CDPTarget[]): CDPTarget | undefined {

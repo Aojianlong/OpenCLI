@@ -21,6 +21,12 @@ describe('reddit whoami command', () => {
         expect(command.args).toEqual([]);
     });
 
+    it('is not overwritten when the login module loads later', async () => {
+        await import('./auth.js');
+        expect(getRegistry().get('reddit/whoami')).toBe(command);
+        expect(getRegistry().get('reddit/login')).toBeDefined();
+    });
+
     it('throws AuthRequiredError on 401/403 from /api/me.json', async () => {
         const page = makePage({ kind: 'auth', detail: 'Reddit /api/me.json returned HTTP 401' });
         await expect(command.func(page, {})).rejects.toBeInstanceOf(AuthRequiredError);
