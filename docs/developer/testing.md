@@ -10,7 +10,7 @@
 | `extension` | `extension/src/**/*.test.ts` | 使用 mocked Chrome APIs 的 extension 行为 |
 | `adapter` | `clis/**/*.test.{ts,js}` | 站点解析、数据归一化、站点特有错误与 command wiring |
 | `e2e-fixed-port` | `tests/e2e/browser-tabs.test.ts`、`daemon-transport.test.ts` | 真实 daemon 与模拟 extension 的协议；串行运行 |
-| `e2e` | `tests/e2e/` 中配置启用的文件 | 真实 CLI 入口、管理命令、插件、auth contract 和站点调用 |
+| `e2e` | `tests/e2e/` 中配置启用的文件 | 默认只跑离线 CLI、管理命令与 auth contract；真实站点和 GitHub plugin 测试需显式启用 |
 | `smoke` | `tests/smoke/` | 公开 API 与命令注册健康检查，无需 Chrome |
 
 ## 本地验证
@@ -30,11 +30,13 @@ npx vitest run --project adapter clis/ctrip/auth.test.js
 # 真实 CLI + 隔离的站点 fixture，无需登录或 Chrome
 npx vitest run --project e2e tests/e2e/auth-contract.test.ts tests/e2e/management.test.ts
 
-# 包含真实站点调用，需要相应网络与浏览器环境
+# 离线 CLI 与 daemon contract（固定端口测试会重启 daemon）
 npm run test:e2e
+
+# 少量严格的真实公开 API 检查
 npx vitest run --project smoke
 
-# 所有默认启用的 projects，包含真实站点调用
+# 所有默认启用的 projects，包含公开 API smoke
 npm run test:all
 ```
 
@@ -47,6 +49,7 @@ E2E 运行构建后的 CLI，修改源码后先重新 build。
 - 共享 helper 的完整边界矩阵放在 helper 所在层；各 command 保留必要 wiring 验证。
 - Adapter test 覆盖站点 response shape 和解析边界；E2E 保留代表性的成功、typed error、exit code 与跨层连接验证，不复制整套解析矩阵。
 - CLI 输出格式入口统一放在 `tests/e2e/management.test.ts`；具体格式渲染逻辑放在 `src/output.test.ts`。
+- 不逐 command 抄录 columns、strategy、默认值做静态断言；manifest 一致性、全量 `validate` 与 column lint 统一负责声明检查。站点测试应调用行为；特有的 session/navigation contract 仍可保留。
 - 相同 test body 如果调用不同 command，并不自动构成重复。
 - 不添加“非零退出时只要有文字就通过”的 auth test：未知命令和程序崩溃也能满足这种断言。应检查具体错误类型、状态或输出内容。
 - 不为了验证 auth 自动执行创建、删除、发布或付费操作；使用隔离 fixture 验证这些分支。
@@ -60,7 +63,7 @@ Auth 的确定性 CLI contract 在 `auth-contract.test.ts`，站点特有判断�
 可选测试通过环境变量启用：
 
 ```bash
-# 扩展真实站点覆盖
+# 手动运行真实站点、文章下载与 GitHub plugin 测试
 OPENCLI_E2E=1 npm run test:e2e
 
 # 真实 Chrome + extension contract
@@ -73,13 +76,13 @@ OPENCLI_AX_E2E=1 npx vitest run --project e2e tests/e2e/browser-ax-chrome.test.t
 
 | Workflow / job | 频率 | 覆盖 |
 |---|---|---|
-| CI / build | PR、main/dev push、每周、手动 | Linux/macOS/Windows build；Linux lint、manifest 与隔离 auth E2E |
-| CI / unit-test | 同上 | PR 在 Linux；push、每周和手动覆盖三 OS；各分两 shard |
-| CI / extension | 随 unit-test 的 Linux shard | mocked Chrome APIs，只在 Linux 跑一次完整集合 |
-| CI / adapter-test | main/dev push、每周、手动 | 完整 adapter project |
+| CI / build | PR、main/dev push、每周、手动 | Linux build、lint、manifest 与全部离线 CLI E2E；每周/手动再跑三 OS build |
+| CI / unit-test | 同上 | Linux 两个 shard 跑完整 unit + extension + adapter；每周/手动额外跑 macOS/Windows core tests |
 | CI / bun-test | 每周、手动 | Bun runtime compatibility |
-| CI / smoke-test | 每周、手动 | Linux 公开 API，无需安装 Chrome |
-| E2E Headed Chrome | 匹配路径的 main/dev push、release tag、每日、手动 | 三 OS daemon transport；Linux 真实 extension；Linux/macOS 站点 E2E |
+| CI / smoke-test | 每周、手动 | 四个公开 API family 的代表性 endpoint；非零退出即失败 |
+| E2E Headed Chrome | 匹配路径的 main/dev push、release tag、每日、手动 | 三 OS 的 CLI tab/daemon contract；Linux 真实 extension，不重复整套站点 E2E |
 
 Bun compatibility 不再作为每次 PR 的 gate；相关 runtime 改动应在本地额外运行 `npm run test:bun`。
 CI 的精确触发条件与命令以 `.github/workflows/` 为准。
+
+跨平台 core/build 回归改由每周或手动检查，可能比每次 push 更晚发现。真实站点宽覆盖改为 opt-in；默认 CI 不证明所有网站当前可用。

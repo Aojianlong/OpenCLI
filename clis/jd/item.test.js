@@ -14,25 +14,7 @@ function restoreGlobals() {
 }
 describe('jd item adapter', () => {
     const command = getRegistry().get('jd/item');
-    it('registers the command with correct shape', () => {
-        expect(command).toBeDefined();
-        expect(command.site).toBe('jd');
-        expect(command.name).toBe('item');
-        expect(command.domain).toBe('item.jd.com');
-        expect(command.strategy).toBe('cookie');
-        expect(typeof command.func).toBe('function');
-    });
-    it('has sku as a required positional arg', () => {
-        const skuArg = command.args.find((a) => a.name === 'sku');
-        expect(skuArg).toBeDefined();
-        expect(skuArg.required).toBe(true);
-        expect(skuArg.positional).toBe(true);
-    });
-    it('has images arg with default 200', () => {
-        const imagesArg = command.args.find((a) => a.name === 'images');
-        expect(imagesArg).toBeDefined();
-        expect(imagesArg.default).toBe(200);
-    });
+
     it('fails fast when JD blocks the item page', async () => {
         const page = {
             evaluate: vi.fn()
@@ -91,10 +73,7 @@ describe('jd item adapter', () => {
         };
         await expect(command.func(page, { sku: '100328272886', images: 0 })).resolves.toEqual([data]);
     });
-    it('includes expected columns', () => {
-        expect(command.columns).toEqual(expect.arrayContaining(['title', 'price', 'shop', 'specs', 'mainImages', 'detailImages']));
-        expect(command.columns).not.toContain('avifImages');
-    });
+
     it('extracts only detail avif images and respects the limit', () => {
         const result = __test__.extractAvifImages([
             'https://img14.360buyimg.com/n1/jfs/t1/normal.jpg',

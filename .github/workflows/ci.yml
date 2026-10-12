@@ -20,7 +20,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-latest, macos-latest, windows-latest]
+        os: ${{ (github.event_name == 'schedule' || github.event_name == 'workflow_dispatch') && fromJSON('["ubuntu-latest","macos-latest","windows-latest"]') || fromJSON('["ubuntu-latest"]') }}
     steps:
       - uses: actions/checkout@v6
 
@@ -61,19 +61,19 @@ jobs:
         if: runner.os == 'Linux'
         run: npm run check:typed-error-lint
 
-      - name: Verify CLI auth contracts with isolated site fixtures
+      - name: Verify offline CLI contracts
         if: runner.os == 'Linux'
-        run: npx vitest run --project e2e tests/e2e/auth-contract.test.ts
+        run: npx vitest run --project e2e
 
   # ── Unit tests (vitest shard) ──
-  # PR: ubuntu + Node 22 only (fast feedback, 2 jobs).
-  # Push to main/dev: core unit tests on all three operating systems (6 jobs).
+  # Every PR/push runs all offline tests on Linux; scheduled/manual runs
+  # additionally check core behavior on macOS and Windows.
   unit-test:
     runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: false
       matrix:
-        os: ${{ (github.event_name == 'push' || github.event_name == 'schedule' || github.event_name == 'workflow_dispatch') && fromJSON('["ubuntu-latest","macos-latest","windows-latest"]') || fromJSON('["ubuntu-latest"]') }}
+        os: ${{ (github.event_name == 'schedule' || github.event_name == 'workflow_dispatch') && fromJSON('["ubuntu-latest","macos-latest","windows-latest"]') || fromJSON('["ubuntu-latest"]') }}
         node-version: [22]
         shard: [1, 2]
     steps:
@@ -87,13 +87,13 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      - name: Run unit tests (Node ${{ matrix.node-version }}, shard ${{ matrix.shard }}/2)
-        run: npx vitest run --project unit --reporter=verbose --shard=${{ matrix.shard }}/2
-
-      # Extension tests mock Chrome APIs; their behavior does not depend on the host OS.
-      - name: Run extension tests once per shard
+      - name: Run all offline tests (Linux, shard ${{ matrix.shard }}/2)
         if: runner.os == 'Linux'
-        run: npx vitest run --project extension --reporter=verbose --shard=${{ matrix.shard }}/2
+        run: npm test -- --shard=${{ matrix.shard }}/2
+
+      - name: Run cross-platform core tests (shard ${{ matrix.shard }}/2)
+        if: runner.os != 'Linux'
+        run: npx vitest run --project unit --shard=${{ matrix.shard }}/2
 
   # ── Bun compatibility check ──
   bun-test:
@@ -116,28 +116,6 @@ jobs:
 
       - name: Run unit tests under Bun
         run: bun vitest run --project unit --reporter=verbose
-
-  # Adapter tests are pure unit tests — OS doesn't affect results. Gated off
-  # `pull_request` to keep PR CI under ~2 minutes; adapter authors run focused
-  # tests locally before pushing, and `push` to main / weekly cron / manual
-  # dispatch still guard the merged state.
-  adapter-test:
-    if: github.event_name == 'push' || github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
-    runs-on: ubuntu-latest
-    needs: build
-    steps:
-      - uses: actions/checkout@v6
-
-      - uses: actions/setup-node@v6
-        with:
-          node-version: '22'
-          cache: 'npm'
-
-      - name: Install dependencies
-        run: npm ci
-
-      - name: Run focused adapter tests
-        run: npm run test:adapter -- --reporter=verbose
 
   # ── Smoke tests (scheduled / manual only) ──
   smoke-test:

@@ -43,20 +43,6 @@ function child(id, rootId, parentId, content = `reply ${id}`, extra = {}) {
 }
 
 describe('zhihu answer-comments', () => {
-    it('registers score/latest ordering and reconstructable hierarchy fields', () => {
-        const cmd = command();
-        expect(cmd).toBeDefined();
-        expect(cmd.access).toBe('read');
-        expect(cmd.strategy).toBe('cookie');
-        expect(cmd.args.find((arg) => arg.name === 'order')).toMatchObject({
-            default: 'score',
-            choices: ['score', 'latest'],
-        });
-        expect(cmd.columns).toEqual([
-            'rank', 'comment_rank', 'reply_rank', 'depth', 'id', 'parent_id',
-            'author', 'reply_to', 'likes', 'created_at', 'url', 'content',
-        ]);
-    });
 
     it('uses comment_v5 and preserves root order plus exact reply depth', async () => {
         const page = pageWith(async (url) => {

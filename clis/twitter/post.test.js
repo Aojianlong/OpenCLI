@@ -49,11 +49,6 @@ function makePage(evaluateResults = [], overrides = {}) {
 describe('twitter post command', () => {
     const getCommand = () => getRegistry().get('twitter/post');
 
-    it('registers created tweet id/url columns', () => {
-        const command = getCommand();
-        expect(command?.columns).toEqual(['status', 'message', 'text', 'id', 'url']);
-    });
-
     it('posts text-only tweet successfully through the current compose route', async () => {
         const command = getCommand();
         const page = makePage([

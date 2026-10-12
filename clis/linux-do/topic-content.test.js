@@ -45,11 +45,7 @@ describe('linux-do topic-content', () => {
         expect(result.content).toContain('Hello **world**');
         expect(result.content).toContain('> quoted');
     });
-    it('registers topic-content with plain default output for markdown body rendering', () => {
-        const command = getRegistry().get('linux-do/topic-content');
-        expect(command?.defaultFormat).toBe('plain');
-        expect(command?.columns).toEqual(['content']);
-    });
+
     it('keeps topic adapter as a summarized first-page reader after the split', () => {
         const topicTs = fs.readFileSync(new URL('./topic.js', import.meta.url), 'utf8');
         expect(topicTs).not.toContain('main_only');

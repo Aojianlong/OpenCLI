@@ -148,12 +148,6 @@ describe('deepseek ask --think', () => {
     expect(mockWaitForResponse).toHaveBeenCalledWith(page, 5, 'what is the answer?', 120000, false);
   });
 
-  it('does not declare static columns (derived from row keys)', () => {
-    // columns should be undefined so the renderer infers from row keys,
-    // avoiding empty trailing columns on non-think output.
-    expect(askCommand.columns).toBeUndefined();
-  });
-
   it('non-think rows only contain response key', async () => {
     mockWaitForResponse.mockResolvedValue('Plain answer.');
 
