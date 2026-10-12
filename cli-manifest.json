@@ -27685,7 +27685,7 @@
         "type": "str",
         "required": true,
         "positional": true,
-        "help": "Illustration ID"
+        "help": "Illustration ID or Pixiv artwork URL"
       },
       {
         "name": "output",

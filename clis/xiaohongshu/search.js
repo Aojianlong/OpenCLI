@@ -32,12 +32,19 @@ const WAIT_FOR_CONTENT_JS = `
     };
     const found = detect();
     if (found) return resolve(found);
+    let timer;
+    const finish = (result) => {
+      observer.disconnect();
+      clearTimeout(timer);
+      resolve(result);
+    };
     const observer = new MutationObserver(() => {
       const result = detect();
-      if (result) { observer.disconnect(); resolve(result); }
+      if (result) finish(result);
     });
-    observer.observe(document.body, { childList: true, subtree: true });
-    setTimeout(() => { observer.disconnect(); resolve('timeout'); }, 5000);
+    // Document exists before body parsing and survives body replacement.
+    observer.observe(document, { childList: true, subtree: true });
+    timer = setTimeout(() => finish('timeout'), 5000);
   })
 `;
 const DEFAULT_HARVEST_STEP = 900;
@@ -577,18 +584,18 @@ export function buildScrollUntilJs(targetCount, maxScrolls = 15) {
         let plateauRounds = 0;
         for (let i = 0; i < ${maxScrolls}; i++) {
           if (countItems() >= ${targetCount}) break;
-          const lastHeight = document.body.scrollHeight;
+          const lastHeight = document.body?.scrollHeight || document.documentElement?.scrollHeight || 0;
           window.scrollTo(0, lastHeight);
           await new Promise((resolve) => {
             let to;
             const ob = new MutationObserver(() => {
-              if (document.body.scrollHeight > lastHeight) {
+              if ((document.body?.scrollHeight || document.documentElement?.scrollHeight || 0) > lastHeight) {
                 clearTimeout(to);
                 ob.disconnect();
                 setTimeout(resolve, 200);
               }
             });
-            ob.observe(document.body, { childList: true, subtree: true });
+            ob.observe(document, { childList: true, subtree: true });
             to = setTimeout(() => { ob.disconnect(); resolve(null); }, 2500);
           });
           const newCount = countItems();
@@ -919,6 +926,7 @@ export const command = cli({
     },
 });
 export const __test__ = {
+    WAIT_FOR_CONTENT_JS,
     harvestOptionsForLimit,
     stripXhsAuthorDateSuffix,
 };
