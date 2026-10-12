@@ -17497,8 +17497,8 @@
       "name",
       "verified",
       "private",
-      "avatar_url",
-      "url"
+      "url",
+      "avatar_url"
     ],
     "type": "js",
     "modulePath": "instagram/search.js",
@@ -37541,7 +37541,6 @@
     "columns": [
       "id",
       "author",
-      "author_verified",
       "bio",
       "text",
       "created_at",
@@ -37552,7 +37551,8 @@
       "media_urls",
       "media_posters",
       "card",
-      "quoted_tweet"
+      "quoted_tweet",
+      "author_verified"
     ],
     "type": "js",
     "modulePath": "twitter/search.js",
@@ -37593,7 +37593,6 @@
     "columns": [
       "id",
       "author",
-      "author_verified",
       "bio",
       "text",
       "likes",
@@ -37603,7 +37602,8 @@
       "media_urls",
       "media_posters",
       "card",
-      "quoted_tweet"
+      "quoted_tweet",
+      "author_verified"
     ],
     "type": "js",
     "modulePath": "twitter/thread.js",
@@ -37648,7 +37648,6 @@
     "columns": [
       "id",
       "author",
-      "author_verified",
       "bio",
       "text",
       "likes",
@@ -37661,7 +37660,8 @@
       "media_urls",
       "media_posters",
       "card",
-      "quoted_tweet"
+      "quoted_tweet",
+      "author_verified"
     ],
     "type": "js",
     "modulePath": "twitter/timeline.js",

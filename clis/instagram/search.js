@@ -9,7 +9,7 @@ cli({
         { name: 'query', required: true, positional: true, help: 'Search query' },
         { name: 'limit', type: 'int', default: 10, help: 'Number of results' },
     ],
-    columns: ['rank', 'username', 'name', 'verified', 'private', 'avatar_url', 'url'],
+    columns: ['rank', 'username', 'name', 'verified', 'private', 'url', 'avatar_url'],
     pipeline: [
         { navigate: 'https://www.instagram.com' },
         { evaluate: `(async () => {
