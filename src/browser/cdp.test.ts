@@ -1,5 +1,6 @@
-import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { mkdtempSync, writeFileSync } from 'node:fs';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { mkdtempSync, rmSync, writeFileSync } from 'node:fs';
+import { execFileSync } from 'node:child_process';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 
@@ -176,6 +177,11 @@ describe('CDPBridge cookies', () => {
 });
 
 describe('CDPBridge init script', () => {
+  const tempDirs: string[] = [];
+  afterEach(() => {
+    vi.unstubAllEnvs();
+    for (const dir of tempDirs.splice(0)) rmSync(dir, { recursive: true, force: true });
+  });
   beforeEach(() => {
     vi.unstubAllEnvs();
   });
@@ -186,7 +192,9 @@ describe('CDPBridge init script', () => {
 
   it('registers OPENCLI_CDP_INIT_SCRIPT after the stealth script', async () => {
     vi.stubEnv('OPENCLI_CDP_ENDPOINT', 'ws://127.0.0.1:9222/devtools/page/1');
-    const file = join(mkdtempSync(join(tmpdir(), 'opencli-init-')), 'init.js');
+    const dir = mkdtempSync(join(tmpdir(), 'opencli-init-'));
+    tempDirs.push(dir);
+    const file = join(dir, 'init.js');
     writeFileSync(file, 'window.__opencliInit = 1;');
     vi.stubEnv('OPENCLI_CDP_INIT_SCRIPT', file);
 
@@ -197,6 +205,19 @@ describe('CDPBridge init script', () => {
     const sources = initScripts(send.mock.calls);
     expect(sources).toHaveLength(2);
     expect(sources[1]).toBe('window.__opencliInit = 1;');
+    await bridge.close();
+  });
+
+  it.skipIf(process.platform === 'win32')('rejects a FIFO before opening a CDP connection', async () => {
+    const dir = mkdtempSync(join(tmpdir(), 'opencli-init-'));
+    tempDirs.push(dir);
+    const file = join(dir, 'init.pipe');
+    execFileSync('mkfifo', [file]);
+    vi.stubEnv('OPENCLI_CDP_INIT_SCRIPT', file);
+    const previousSocket = MockWebSocket.lastInstance;
+    await expect(new CDPBridge().connect({ cdpEndpoint: 'ws://127.0.0.1:9222' }))
+      .rejects.toThrow('regular JavaScript file');
+    expect(MockWebSocket.lastInstance).toBe(previousSocket);
   });
 
   it('registers only the stealth script when unset', async () => {
@@ -207,5 +228,6 @@ describe('CDPBridge init script', () => {
     await bridge.connect();
 
     expect(initScripts(send.mock.calls)).toHaveLength(1);
+    await bridge.close();
   });
 });
