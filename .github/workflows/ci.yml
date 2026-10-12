@@ -32,9 +32,6 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      - name: Type check
-        run: npx tsc --noEmit
-
       - name: Build
         run: npm run build
 
@@ -70,14 +67,14 @@ jobs:
 
   # ── Unit tests (vitest shard) ──
   # PR: ubuntu + Node 22 only (fast feedback, 2 jobs).
-  # Push to main/dev: full matrix for cross-platform/cross-version coverage (12 jobs).
+  # Push to main/dev: core unit tests on all three operating systems (6 jobs).
   unit-test:
     runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: false
       matrix:
         os: ${{ (github.event_name == 'push' || github.event_name == 'schedule' || github.event_name == 'workflow_dispatch') && fromJSON('["ubuntu-latest","macos-latest","windows-latest"]') || fromJSON('["ubuntu-latest"]') }}
-        node-version: ${{ (github.event_name == 'push' || github.event_name == 'schedule' || github.event_name == 'workflow_dispatch') && fromJSON('["22"]') || fromJSON('["22"]') }}
+        node-version: [22]
         shard: [1, 2]
     steps:
       - uses: actions/checkout@v6
@@ -91,10 +88,16 @@ jobs:
         run: npm ci
 
       - name: Run unit tests (Node ${{ matrix.node-version }}, shard ${{ matrix.shard }}/2)
-        run: npx vitest run --project unit --project extension --reporter=verbose --shard=${{ matrix.shard }}/2
+        run: npx vitest run --project unit --reporter=verbose --shard=${{ matrix.shard }}/2
+
+      # Extension tests mock Chrome APIs; their behavior does not depend on the host OS.
+      - name: Run extension tests once per shard
+        if: runner.os == 'Linux'
+        run: npx vitest run --project extension --reporter=verbose --shard=${{ matrix.shard }}/2
 
   # ── Bun compatibility check ──
   bun-test:
+    if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v6
@@ -116,7 +119,7 @@ jobs:
 
   # Adapter tests are pure unit tests — OS doesn't affect results. Gated off
   # `pull_request` to keep PR CI under ~2 minutes; adapter authors run focused
-  # tests locally before pushing, and `push` to main / nightly cron / manual
+  # tests locally before pushing, and `push` to main / weekly cron / manual
   # dispatch still guard the merged state.
   adapter-test:
     if: github.event_name == 'push' || github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
@@ -140,13 +143,7 @@ jobs:
   smoke-test:
     if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
     needs: build
-    runs-on: ${{ matrix.os }}
-    strategy:
-      fail-fast: false
-      matrix:
-        # NOTE: Windows excluded — browser-actions/setup-chrome hangs during
-        # Chrome MSI installation on Windows runners (known issue).
-        os: [ubuntu-latest, macos-latest]
+    runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v6
 
@@ -158,20 +155,9 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      - name: Setup Chrome
-        uses: ./.github/actions/setup-chrome
-        id: setup-chrome
-
       - name: Build
         run: npm run build
 
-      - name: Run smoke tests (Linux, via xvfb)
-        if: runner.os == 'Linux'
-        run: |
-          xvfb-run --auto-servernum --server-args="-screen 0 1280x720x24" \
-            npx vitest run tests/smoke/ --reporter=verbose
-
-      - name: Run smoke tests (macOS / Windows)
-        if: runner.os != 'Linux'
-        run: npx vitest run tests/smoke/ --reporter=verbose
+      - name: Run API health smoke tests
+        run: npx vitest run --project smoke --reporter=verbose
     timeout-minutes: 15

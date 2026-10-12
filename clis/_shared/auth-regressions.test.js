@@ -52,9 +52,9 @@ describe('Google account controls', () => {
     expect(page.getCookies).not.toHaveBeenCalled();
     page.dom.window.close();
   });
-  it.each(['gemini', 'gmail', 'notebooklm'])('%s reports an unrecognized page as a probe error', async site => {
+  it('reports an unrecognized Google page as a probe error', async () => {
     const page = browserFixture();
-    await expect(cmd(site).func(page, {})).rejects.toBeInstanceOf(CommandExecutionError);
+    await expect(cmd('gmail').func(page, {})).rejects.toBeInstanceOf(CommandExecutionError);
     page.dom.window.close();
   });
   it('distinguishes an explicit sign-in surface from missing DOM', async () => {

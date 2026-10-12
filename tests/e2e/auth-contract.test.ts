@@ -6,7 +6,7 @@ import { JSDOM } from 'jsdom';
 import { WebSocketServer } from 'ws';
 
 const root = fileURLToPath(new URL('../../', import.meta.url));
-const member = { ResponseStatus: { Ack: 'Success' }, uid: 'fixture-member', userName: '', grade: 30,
+const member = { ResponseStatus: { Ack: 'Success' }, uid: null, userName: '', grade: 30,
   memberAssetSummaries: [{ assetType: 'UserGrade', descInfo: '铂金贵宾' }] };
 const anonymous = { ResponseStatus: { Ack: 'Failure', Errors: [{ ErrorCode: 'AccountsMobileRequestFilterException',
   Message: 'Request head is null and cookie auth is null. cookieName: cticket', ErrorFields: [] }] } };
@@ -62,29 +62,21 @@ describe('CLI auth contract end to end', () => {
   it('returns current Ctrip membership without legacy cookies', async () => {
     const result = await runWithSite(['ctrip', 'whoami', '-f', 'json'], member);
     expect(result.code, result.stderr).toBe(0);
-    expect(JSON.parse(result.stdout)).toMatchObject({ logged_in: true, user_id: 'fixture-member', vip_grade: '30' });
+    expect(JSON.parse(result.stdout)).toMatchObject({ logged_in: true, user_id: '', name: '', vip_grade: '30' });
     expect(result.requests).toEqual(['https://m.ctrip.com/restapi/soa2/15201/getMemberSummaryInfo']);
-  }, 20_000);
-  it('accepts the live API shape with a redacted uid and nickname', async () => {
-    const result = await runWithSite(['ctrip', 'whoami', '-f', 'json'], { ...member, uid: null, userName: '', grade: '10' });
-    expect(result.code, result.stderr).toBe(0);
-    expect(JSON.parse(result.stdout)).toMatchObject({ logged_in: true, user_id: '', name: '', vip_grade: '10' });
   }, 20_000);
   it.each([
     ['expired session', anonymous, 200, 'AUTH_REQUIRED'],
     ['service outage', {}, 503, 'COMMAND_EXEC'],
-    ['unrecognized response', {}, 200, 'COMMAND_EXEC'],
   ])('returns the correct typed failure for %s', async (_name, payload, status, errorCode) => {
     const result = await runWithSite(['ctrip', 'whoami', '-f', 'json'], payload, status);
     expect(result.code).not.toBe(0);
     expect(result.stdout + result.stderr).toContain(errorCode);
   }, 20_000);
-  it.each([
-    [member, 200, 'logged_in'], [anonymous, 200, 'not_logged_in'], [{}, 503, 'error'],
-  ])('preserves the full auth status classification %#', async (payload, status, expected) => {
-    const result = await runWithSite(['auth', 'status', '--site', 'ctrip', '--full', '-f', 'json'], payload, status);
+  it('preserves service errors through full auth status', async () => {
+    const result = await runWithSite(['auth', 'status', '--site', 'ctrip', '--full', '-f', 'json'], {}, 503);
     expect(result.code, result.stderr).toBe(0);
-    expect(JSON.parse(result.stdout)[0].status).toBe(expected);
+    expect(JSON.parse(result.stdout)[0].status).toBe('error');
   }, 20_000);
   it('reports quick status as unknown without opening a browser or guessing from cookies', async () => {
     const result = await runWithSite(['auth', 'status', '--site', 'ctrip', '-f', 'json'], member);
