@@ -28332,43 +28332,54 @@
   {
     "site": "proton",
     "name": "inbox",
-    "description": "Scrape Proton Mail inbox from the logged-in Chrome session",
+    "description": "List sender-filtered inbox metadata via API; optionally read the newest message for a code",
     "access": "read",
-    "example": "opencli proton inbox --from ifood -f json",
+    "example": "opencli proton inbox --from ifood --read-code -f json",
     "domain": "mail.proton.me",
-    "strategy": "ui",
+    "strategy": "cookie",
     "browser": true,
     "args": [
       {
         "name": "from",
         "type": "str",
         "required": false,
-        "help": "Sender keyword (case-insensitive substring)"
+        "help": "Case-insensitive substring of the sender name or address"
       },
       {
         "name": "limit",
         "type": "int",
         "default": 20,
         "required": false,
-        "help": "Max message rows (1..100)"
+        "help": "Maximum matching messages (1..100)"
+      },
+      {
+        "name": "since",
+        "type": "int",
+        "default": 0,
+        "required": false,
+        "help": "Only messages at or after this Unix timestamp (seconds)"
+      },
+      {
+        "name": "read-code",
+        "type": "bool",
+        "default": false,
+        "required": false,
+        "help": "Open the newest match and extract a code; may mark that message read"
       },
       {
         "name": "timeout",
         "type": "int",
-        "default": 90,
+        "default": 30,
         "required": false,
-        "help": "Max seconds to wait for the mailbox (1..900)"
+        "help": "Seconds to wait for selected message decryption (1..900)"
       }
     ],
     "columns": [
-      "url",
-      "title",
-      "logged_in",
+      "id",
       "sender",
-      "sender_hit",
-      "code",
-      "rows",
-      "body_head"
+      "subject",
+      "time",
+      "code"
     ],
     "type": "js",
     "modulePath": "proton/inbox.js",
@@ -28379,70 +28390,50 @@
   {
     "site": "proton",
     "name": "login",
-    "description": "Sign in to Proton Mail via the connected Chrome session (web UI)",
+    "description": "Open proton login and wait until the browser session is authenticated",
     "access": "write",
-    "example": "opencli proton login --email you@proton.me",
-    "domain": "account.proton.me",
-    "strategy": "ui",
+    "domain": "mail.proton.me",
+    "strategy": "cookie",
     "browser": true,
     "args": [
       {
-        "name": "email",
-        "type": "str",
-        "required": false,
-        "help": "Proton address or username (or set PROTON_EMAIL)"
-      },
-      {
-        "name": "password",
-        "type": "str",
-        "required": false,
-        "help": "Password; prefer PROTON_PASSWORD over this flag"
-      },
-      {
         "name": "timeout",
         "type": "int",
-        "default": 120,
+        "default": 300,
         "required": false,
-        "help": "Max seconds for splash, submit, and mailbox (1..900)"
+        "help": "Maximum seconds to wait for the user to finish login"
       }
     ],
     "columns": [
+      "status",
       "logged_in",
-      "already_logged_in",
-      "email",
-      "url",
-      "title"
+      "site",
+      "id",
+      "username",
+      "email"
     ],
     "type": "js",
     "modulePath": "proton/login.js",
     "sourceFile": "proton/login.js",
     "navigateBefore": false,
-    "siteSession": "persistent"
+    "siteSession": "persistent",
+    "defaultWindowMode": "foreground"
   },
   {
     "site": "proton",
     "name": "whoami",
-    "description": "Show the Proton Mail account signed in on the connected Chrome session",
+    "description": "Show the Proton account verified by the authenticated Mail API",
     "access": "read",
-    "example": "opencli proton whoami -f json",
     "domain": "mail.proton.me",
-    "strategy": "ui",
+    "strategy": "cookie",
     "browser": true,
-    "args": [
-      {
-        "name": "timeout",
-        "type": "int",
-        "default": 30,
-        "required": false,
-        "help": "Max seconds to wait past the Proton splash (1..900)"
-      }
-    ],
+    "args": [],
     "columns": [
       "logged_in",
       "site",
-      "email",
-      "url",
-      "title"
+      "id",
+      "username",
+      "email"
     ],
     "type": "js",
     "modulePath": "proton/whoami.js",
