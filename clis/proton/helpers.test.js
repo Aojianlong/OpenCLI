@@ -102,6 +102,16 @@ describe('classifyPage', () => {
     ).toBe('mailbox');
   });
 
+  it('treats mail.proton.me as splash while the SPA is still loading', () => {
+    expect(
+      classifyPage({
+        url: 'https://mail.proton.me/u/2/',
+        title: 'Proton Mail',
+        bodyHead: 'Loading Proton Mail Loading',
+      }),
+    ).toBe('splash');
+  });
+
   it('detects human verification', () => {
     expect(
       classifyPage({

@@ -1,13 +1,30 @@
-import { AuthRequiredError, EmptyResultError } from '@jackwener/opencli/errors';
+import { AuthRequiredError, CommandExecutionError, EmptyResultError } from '@jackwener/opencli/errors';
 import { cli, Strategy } from '@jackwener/opencli/registry';
 import {
   MAIL_DOMAIN,
   MAIL_URL,
+  classifyPage,
   extractEmailFromTitle,
+  inspectPageInPage,
   pickCode,
   requirePositiveInt,
   scrapeInboxInPage,
 } from './helpers.js';
+
+async function waitForMailbox(page, timeoutSec) {
+  const start = Date.now();
+  let snapshot = await page.evaluate(inspectPageInPage);
+  let kind = classifyPage(snapshot);
+  while (Date.now() - start < timeoutSec * 1000) {
+    if (kind === 'mailbox' || kind === 'login' || kind === 'blocked' || kind === 'apps') {
+      return { kind, inspect: snapshot };
+    }
+    await page.wait(1);
+    snapshot = await page.evaluate(inspectPageInPage);
+    kind = classifyPage(snapshot);
+  }
+  return { kind, inspect: snapshot };
+}
 
 cli({
   site: 'proton',
@@ -27,10 +44,24 @@ cli({
   ],
   columns: ['url', 'title', 'logged_in', 'sender', 'sender_hit', 'code', 'rows', 'body_head'],
   func: async (page, kwargs) => {
-    requirePositiveInt(kwargs.timeout, 90, 900, '--timeout');
+    const timeout = requirePositiveInt(kwargs.timeout, 90, 900, '--timeout');
     const limit = requirePositiveInt(kwargs.limit, 20, 100, '--limit');
     const sender = String(kwargs.from ?? '').trim();
-    await page.goto(MAIL_URL, { settleMs: 5000 });
+    await page.goto(MAIL_URL, { settleMs: 2500 });
+    const { kind } = await waitForMailbox(page, timeout);
+    if (kind === 'blocked') {
+      throw new CommandExecutionError(
+        'Proton human verification is blocking the mailbox',
+        'Solve it in Chrome, then retry `opencli proton inbox`.',
+      );
+    }
+    if (kind !== 'mailbox') {
+      throw new AuthRequiredError(
+        MAIL_DOMAIN,
+        'Not logged in to Proton Mail',
+        'Run `opencli proton login`, then retry `opencli proton inbox`.',
+      );
+    }
     const raw = await page.evaluate(scrapeInboxInPage, sender, limit);
     if (!raw?.logged_in) {
       throw new AuthRequiredError(

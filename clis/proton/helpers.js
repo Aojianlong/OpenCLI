@@ -63,6 +63,9 @@ export function classifyPage(page) {
   ) {
     return 'blocked';
   }
+  if (/loading proton (account|mail)/i.test(body)) {
+    return 'splash';
+  }
   if (/mail\.proton\.me/i.test(url) && !/\/login/i.test(url)) {
     return 'mailbox';
   }
