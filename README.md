@@ -120,6 +120,29 @@ If you want to add your own commands, start with the [Extending OpenCLI guide](.
 | Modify an official adapter locally | `opencli adapter eject <site>` + `opencli adapter reset <site>` |
 | Publish or install third-party commands | `opencli plugin install github:user/repo` |
 
+### Close temporary browser tabs after use
+
+To remove temporary owned tabs when a workflow finishes:
+
+```bash
+export OPENCLI_CLOSE_OWNED_TAB=1
+opencli web read --url https://example.com --stdout true
+# Multi-step browser sessions stay open between calls; close explicitly at the end:
+opencli browser research close
+```
+
+This opts into closing only the current lease's owned tab. Chrome closes its
+window automatically if no tabs remain; existing user pages and other sessions
+are preserved. Bound tabs are detached and kept open. The default reusable
+container policy, idle expiry, `--keep-tab true`, and persistent site sessions
+remain unchanged. Use `--site-session ephemeral` for one-shot reads of adapters
+that otherwise keep a persistent site session.
+
+Cleanup requires an extension acknowledgement. If cleanup fails or the extension
+is too old, a warning reports it separately from the site action. Retry cleanup
+rather than repeating a completed write. Explicit `browser close` also exits
+with an error; a one-shot adapter can still return its already-completed result.
+
 ## For AI Agents
 
 OpenCLI's browser commands are designed to be used by AI Agents — not run manually. Install skills into your AI agent (Claude Code, Cursor, etc.), and the agent operates websites on your behalf using your logged-in Chrome session.
@@ -188,6 +211,7 @@ When the site you need is not yet covered, use the `opencli-adapter-author` skil
 | `OPENCLI_PROFILE` | — | Browser Bridge profile alias/contextId to use when multiple Chrome profiles are connected |
 | `OPENCLI_WINDOW` | command default | Set to `foreground` or `background` to override Browser Bridge window placement. Browser-backed commands also accept `--window <foreground\|background>`. |
 | `OPENCLI_SITE_SESSION` | adapter default | Set to `ephemeral` or `persistent` to override `siteSession` metadata for browser-backed adapter commands. `ephemeral` releases the one-shot tab when the command finishes, and the automation window stays open as a reusable container; `persistent` reuses the site's session. Per-command `--site-session` takes precedence. |
+| `OPENCLI_CLOSE_OWNED_TAB` | `0` | Set to `1` to close the current owned tab on explicit session close or one-shot adapter cleanup instead of keeping a blank placeholder. Requires a supporting Browser Bridge extension. |
 | `OPENCLI_BROWSER_CONNECT_TIMEOUT` | `45` | Seconds to wait for browser connection |
 | `OPENCLI_BROWSER_COMMAND_TIMEOUT` | `60` | Seconds to wait for a single browser command |
 | `OPENCLI_BROWSER_IDLE_TIMEOUT` | extension default | Owned session idle timeout in seconds; per-command `idleTimeout` takes precedence. Does not extend explicit cleanup: ephemeral adapters normally release their tab at command completion. Bound tabs and persistent adapter sessions ignore idle timeouts. Releasing a session keeps its reusable window container open. |

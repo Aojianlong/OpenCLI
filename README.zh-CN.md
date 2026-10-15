@@ -174,6 +174,7 @@ Agent 在内部自动处理所有 `opencli browser` 命令——你只需用自�
 |------|--------|------|
 | `OPENCLI_WINDOW` | 命令默认值 | 设为 `foreground` 或 `background` 来覆盖 Browser Bridge 窗口位置。浏览器型命令也支持 `--window <foreground\|background>` |
 | `OPENCLI_SITE_SESSION` | adapter 默认值 | 设为 `ephemeral` 或 `persistent`，覆盖浏览器型 adapter 命令的 `siteSession` 元数据。`ephemeral` 会在命令结束时释放一次性标签页，自动化窗口会保留为可复用的容器；`persistent` 会复用该站点的 session。命令级 `--site-session` 优先。 |
+| `OPENCLI_CLOSE_OWNED_TAB` | `0` | 设为 `1`，显式关闭会话或一次性 adapter 清理时关闭当前租约拥有的标签，不保留空白占位页。需要支持此功能的 Browser Bridge 扩展。 |
 | `OPENCLI_BROWSER_CONNECT_TIMEOUT` | `45` | 浏览器连接超时（秒） |
 | `OPENCLI_BROWSER_COMMAND_TIMEOUT` | `60` | 单个浏览器命令超时（秒） |
 | `OPENCLI_BROWSER_IDLE_TIMEOUT` | 扩展默认值 | owned session 的 idle timeout（秒），命令级 `idleTimeout` 优先。不延长显式清理时间：ephemeral adapter 通常在命令结束时释放 tab；bound tab 和 persistent adapter session 忽略 idle timeout。释放 session 后，可复用的 window container 仍保留。 |
@@ -353,3 +354,15 @@ Albato、Goofish 和 Taobao 需要从本地 adapter 子目录安装，见[安装
 ## License
 
 [Apache-2.0](./LICENSE)
+
+### 任务完成后关闭临时标签页
+
+设置 `export OPENCLI_CLOSE_OWNED_TAB=1` 后，一次性 adapter 命令结束时会关闭
+当前租约拥有的标签；多步浏览器任务结束时执行 `opencli browser <session> close`。
+最后一个标签关闭后 Chrome 会自动关闭窗口，用户已有页面、其他会话和绑定的用户标签
+都会保留。默认的窗口复用策略、空闲回收、`--keep-tab true` 和持久站点会话不变；
+需要让默认持久化的 adapter 单次运行后清理时，可加 `--site-session ephemeral`。
+
+清理失败或扩展过旧时会单独输出警告，保留可重试的身份信息。应重试清理，不要重复
+已经完成的网站写入。显式 `browser close` 会报错退出；一次性 adapter 仍可能返回
+已经完成的操作结果。

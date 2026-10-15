@@ -242,6 +242,8 @@ export interface DaemonCommand {
   cdpParams?: Record<string, unknown>;
   /** Window foreground/background policy for owned Browser Bridge containers. */
   windowMode?: 'foreground' | 'background';
+  /** Opt-in close-window teardown of the current owned tab. */
+  closeOwnedTab?: boolean;
   /** Custom idle timeout in seconds for this session. Overrides the default. */
   idleTimeout?: number;
   /** Frame index for cross-frame operations (0-based, from 'frames' action) */

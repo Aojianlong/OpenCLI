@@ -2403,6 +2403,31 @@ function stripOpenCliFrameRoutingParams(params, stripFrameId) {
   return rest;
 }
 async function handleCloseWindow(cmd, leaseKey) {
+  if (cmd.closeOwnedTab === true) {
+    return withLeaseMutation(async () => {
+      if ((activeCommandCounts.get(leaseKey) ?? 0) > 1) {
+        throw new CommandFailure("session_busy", "Cannot close a tab while another command is using this session.");
+      }
+      const session = automationSessions.get(leaseKey);
+      if (!session?.owned) {
+        await releaseLease(leaseKey, "explicit close");
+        return { id: cmd.id, ok: true, data: { closed: true, session: getSessionFromKey(leaseKey), tabCleanup: "no-owned-tab" } };
+      }
+      const tabId = session.preferredTabId;
+      if (tabId === null) {
+        throw new CommandFailure("owned_tab_identity_missing", "Cannot close an owned lease without a tab identity.");
+      }
+      const tab = await chrome.tabs.get(tabId);
+      if (tab.groupId !== void 0 && tab.groupId !== chrome.tabGroups.TAB_GROUP_ID_NONE) {
+        await chrome.tabs.ungroup(tabId);
+      }
+      await safeDetach(tabId);
+      await chrome.tabs.remove(tabId);
+      evictTab(tabId);
+      await removeLeaseSession(leaseKey);
+      return { id: cmd.id, ok: true, data: { closed: true, session: session.session, tabCleanup: "closed-owned-tab" } };
+    });
+  }
   const sessionName = automationSessions.get(leaseKey)?.session ?? getSessionFromKey(leaseKey);
   await releaseLease(leaseKey, "explicit close");
   return { id: cmd.id, ok: true, data: { closed: true, session: sessionName } };

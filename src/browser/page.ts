@@ -200,16 +200,27 @@ export class Page extends CDPBasePage {
 
   /** Release the current browser session lease in the extension */
   async closeWindow(): Promise<void> {
+    const closeOwnedTab = process.env.OPENCLI_CLOSE_OWNED_TAB === '1';
     try {
-      await sendCommand('close-window', { ...this._sessionOpts() });
-    } catch {
+      const result = await sendCommand('close-window', {
+        ...this._sessionOpts(),
+        ...(closeOwnedTab && { closeOwnedTab: true }),
+      });
+      const cleanup = result && typeof result === 'object' && 'tabCleanup' in result ? result.tabCleanup : undefined;
+      if (closeOwnedTab && cleanup !== 'closed-owned-tab' && cleanup !== 'no-owned-tab') {
+        throw new CommandExecutionError('Browser Bridge did not acknowledge owned-tab cleanup; update the extension.');
+      }
+    } catch (err) {
+      if (closeOwnedTab) {
+        log.warn(`Owned-tab cleanup failed: ${err instanceof Error ? err.message : String(err)}. Retry cleanup separately; do not repeat the site action.`);
+        throw err;
+      }
       // Window may already be closed or daemon may be down
-    } finally {
-      this._page = undefined;
-      this._lastUrl = null;
-      this._networkCaptureUnsupported = false;
-      this._networkCaptureWarned = false;
     }
+    this._page = undefined;
+    this._lastUrl = null;
+    this._networkCaptureUnsupported = false;
+    this._networkCaptureWarned = false;
   }
 
   async tabs(): Promise<unknown[]> {
