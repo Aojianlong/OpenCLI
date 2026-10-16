@@ -202,9 +202,8 @@ export class Page extends CDPBasePage {
   async closeWindow(): Promise<void> {
     const closeOwnedTab = process.env.OPENCLI_CLOSE_OWNED_TAB === '1';
     try {
-      const result = await sendCommand('close-window', {
+      const result = await sendCommand(closeOwnedTab ? 'close-owned-tab' : 'close-window', {
         ...this._sessionOpts(),
-        ...(closeOwnedTab && { closeOwnedTab: true }),
       });
       const cleanup = result && typeof result === 'object' && 'tabCleanup' in result ? result.tabCleanup : undefined;
       if (closeOwnedTab && cleanup !== 'closed-owned-tab' && cleanup !== 'no-owned-tab') {
@@ -212,7 +211,7 @@ export class Page extends CDPBasePage {
       }
     } catch (err) {
       if (closeOwnedTab) {
-        log.warn(`Owned-tab cleanup failed: ${err instanceof Error ? err.message : String(err)}. Retry cleanup separately; do not repeat the site action.`);
+        log.warn(`Owned-tab cleanup failed (session=${this.session}, surface=${this.surface}): ${err instanceof Error ? err.message : String(err)}. Retry cleanup separately or close the remaining tab manually; do not repeat the site action.`);
         throw err;
       }
       // Window may already be closed or daemon may be down

@@ -13,6 +13,7 @@ export type Action =
   | 'cookies'
   | 'screenshot'
   | 'close-window'
+  | 'close-owned-tab'
   | 'sessions'
   | 'set-file-input'
   | 'insert-text'
@@ -76,8 +77,6 @@ export interface Command {
   windowMode?: 'foreground' | 'background';
   /** Custom idle timeout in seconds for this session. Overrides the default. */
   idleTimeout?: number;
-  /** Opt-in close-window policy: remove this lease's owned tab instead of parking it. */
-  closeOwnedTab?: boolean;
   /** Frame index for cross-frame operations (0-based, from 'frames' action) */
   frameIndex?: number;
   /** Browser profile/context REQUIRED by the CLI (--profile / env). Used by the daemon for strict routing. */

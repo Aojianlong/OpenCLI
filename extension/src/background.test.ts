@@ -1349,7 +1349,7 @@ describe('background tab isolation', () => {
     const firstTab = mod.__test__.getSession(browserKey('first'))!.preferredTabId!;
     const secondTab = mod.__test__.getSession(browserKey('second'))!.preferredTabId!;
     const result = await mod.__test__.handleCommand({
-      id: 'close-owned', action: 'close-window', session: 'first', closeOwnedTab: true,
+      id: 'close-owned', action: 'close-owned-tab', session: 'first',
     });
     expect(result).toMatchObject({ ok: true, data: { tabCleanup: 'closed-owned-tab' } });
     expect(chrome.tabs.ungroup).toHaveBeenCalledWith(firstTab);
@@ -1362,7 +1362,7 @@ describe('background tab isolation', () => {
     expect(mod.__test__.getSession(browserKey('second'))).not.toBeNull();
     expect(chrome.windows.remove).not.toHaveBeenCalled();
     const again = await mod.__test__.handleCommand({
-      id: 'close-again', action: 'close-window', session: 'first', closeOwnedTab: true,
+      id: 'close-again', action: 'close-owned-tab', session: 'first',
     });
     expect(again).toMatchObject({ ok: true, data: { tabCleanup: 'no-owned-tab' } });
     expect(chrome.tabs.remove).toHaveBeenCalledTimes(1);
@@ -1376,13 +1376,13 @@ describe('background tab isolation', () => {
     const session = mod.__test__.getSession(browserKey('retry'))!;
     chrome.tabs[operation].mockRejectedValueOnce(new Error('Chrome refused cleanup'));
     const result = await mod.__test__.handleCommand({
-      id: 'failed-close', action: 'close-window', session: 'retry', closeOwnedTab: true,
+      id: 'failed-close', action: 'close-owned-tab', session: 'retry',
     });
     expect(result).toMatchObject({ ok: false, error: 'Chrome refused cleanup' });
     expect(mod.__test__.getSession(browserKey('retry'))).toMatchObject({ preferredTabId: session.preferredTabId });
     if (operation === 'ungroup') expect(chrome.tabs.remove).not.toHaveBeenCalled();
     const retry = await mod.__test__.handleCommand({
-      id: 'retry-close', action: 'close-window', session: 'retry', closeOwnedTab: true,
+      id: 'retry-close', action: 'close-owned-tab', session: 'retry',
     });
     expect(retry).toMatchObject({ ok: true, data: { tabCleanup: 'closed-owned-tab' } });
     expect(mod.__test__.getSession(browserKey('retry'))).toBeNull();
@@ -1395,7 +1395,7 @@ describe('background tab isolation', () => {
     await mod.__test__.resolveTabId(undefined, adapterKey('once'));
     const tabId = mod.__test__.getSession(adapterKey('once'))!.preferredTabId!;
     const result = await mod.__test__.handleCommand({
-      id: 'close-adapter', action: 'close-window', session: 'once', surface: 'adapter', closeOwnedTab: true,
+      id: 'close-adapter', action: 'close-owned-tab', session: 'once', surface: 'adapter',
     });
     expect(result).toMatchObject({ ok: true, data: { tabCleanup: 'closed-owned-tab' } });
     expect(chrome.tabs.remove).toHaveBeenCalledExactlyOnceWith(tabId);
@@ -1419,7 +1419,7 @@ describe('background tab isolation', () => {
     await started.promise;
     try {
       const close = await mod.__test__.handleCommand({
-        id: 'busy-close', action: 'close-window', session: 'busy', closeOwnedTab: true,
+        id: 'busy-close', action: 'close-owned-tab', session: 'busy',
       });
       expect(close).toMatchObject({ ok: false, errorCode: 'session_busy' });
       expect(chrome.tabs.remove).not.toHaveBeenCalled();
@@ -1430,13 +1430,59 @@ describe('background tab isolation', () => {
     }
   });
 
+  it('rejects commands arriving after owned-tab cleanup starts and unlocks after failure', async () => {
+    const { chrome } = createChromeMock();
+    vi.stubGlobal('chrome', chrome);
+    const mod = await import('./background');
+    await mod.__test__.resolveTabId(undefined, browserKey('closing'));
+    const started = deferred<void>();
+    const finish = deferred<void>();
+    chrome.tabs.remove.mockImplementationOnce(async () => {
+      started.resolve();
+      await finish.promise;
+      throw new Error('remove failed');
+    });
+    const closing = mod.__test__.handleCommand({ id: 'close', action: 'close-owned-tab', session: 'closing' });
+    await started.promise;
+    const owned = mod.__test__.getSession(browserKey('closing'))!;
+    expect(() => mod.__test__.setSession(browserKey('new-borrower'), {
+      windowId: owned.windowId, owned: false, preferredTabId: owned.preferredTabId,
+    })).toThrow('This tab is closing');
+    try {
+      for (const action of ['tabs', 'bind', 'navigate', 'close-window', 'close-owned-tab'] as const) {
+        const result = await mod.__test__.handleCommand({ id: action, action, session: 'closing', op: 'list', url: 'https://example.com' });
+        expect(result).toMatchObject({ ok: false, errorCode: 'session_busy' });
+      }
+    } finally {
+      finish.resolve();
+      expect(await closing).toMatchObject({ ok: false, error: 'remove failed' });
+    }
+    expect(await mod.__test__.handleCommand({ id: 'retry', action: 'close-owned-tab', session: 'closing' }))
+      .toMatchObject({ ok: true, data: { tabCleanup: 'closed-owned-tab' } });
+  });
+
+  it('preserves an owned tab when a different session is also bound to it', async () => {
+    const { chrome } = createChromeMock();
+    vi.stubGlobal('chrome', chrome);
+    const mod = await import('./background');
+    await mod.__test__.resolveTabId(undefined, browserKey('owner'));
+    const owned = mod.__test__.getSession(browserKey('owner'))!;
+    mod.__test__.setSession(browserKey('borrower'), {
+      windowId: owned.windowId, owned: false, preferredTabId: owned.preferredTabId,
+    });
+    expect(await mod.__test__.handleCommand({ id: 'close', action: 'close-owned-tab', session: 'owner' }))
+      .toMatchObject({ ok: false, errorCode: 'session_busy' });
+    expect(chrome.tabs.remove).not.toHaveBeenCalled();
+    expect(mod.__test__.getSession(browserKey('borrower'))).not.toBeNull();
+  });
+
   it('retains legacy owned leases without guessing which tab to close', async () => {
     const { chrome } = createChromeMock();
     vi.stubGlobal('chrome', chrome);
     const mod = await import('./background');
     mod.__test__.setAutomationWindowId(browserKey('legacy'), 1);
     const result = await mod.__test__.handleCommand({
-      id: 'legacy-close', action: 'close-window', session: 'legacy', closeOwnedTab: true,
+      id: 'legacy-close', action: 'close-owned-tab', session: 'legacy',
     });
     expect(result).toMatchObject({ ok: false, errorCode: 'owned_tab_identity_missing' });
     expect(mod.__test__.getSession(browserKey('legacy'))).not.toBeNull();
@@ -1451,7 +1497,7 @@ describe('background tab isolation', () => {
     const bound = await mod.__test__.handleCommand({ id: 'bind', action: 'bind', session: 'bound' });
     expect(bound.ok).toBe(true);
     const result = await mod.__test__.handleCommand({
-      id: 'close-bound', action: 'close-window', session: 'bound', closeOwnedTab: true,
+      id: 'close-bound', action: 'close-owned-tab', session: 'bound',
     });
     expect(result).toMatchObject({ ok: true, data: { tabCleanup: 'no-owned-tab' } });
     expect(chrome.tabs.remove).not.toHaveBeenCalled();

@@ -241,6 +241,7 @@ function launchChrome(chromePath: string, userDataDir: string, startUrl: string)
       ? ['--headless=new']
       : []),
     `--user-data-dir=${userDataDir}`,
+    '--remote-debugging-port=0',
     `--disable-extensions-except=${EXTENSION_DIR}`,
     `--load-extension=${EXTENSION_DIR}`,
     '--disable-features=DisableLoadExtensionCommandLineSwitch',
@@ -368,6 +369,48 @@ describe('Browser Bridge AX real Chrome smoke', () => {
       }
     }
   });
+
+  it('closes only the owned tab through the real cleanup protocol', async () => {
+    if (skipReason) {
+      if (shouldFailOnBridgeUnavailable()) throw new Error(skipReason);
+      console.warn(`skipped — ${skipReason}`);
+      return;
+    }
+    const suffix = Date.now();
+    const borrowed = { session: `borrowed-${suffix}`, surface: 'browser' as const };
+    const bound = await bridge!.sendCommand({ action: 'bind', ...borrowed });
+    expect(bound.ok, bound.error).toBe(true);
+    const first = { session: `cleanup-first-${suffix}`, surface: 'adapter' as const };
+    const second = { session: `cleanup-second-${suffix}`, surface: 'adapter' as const };
+    const nav = await bridge!.sendCommand({ action: 'navigate', ...first, url: site!.url });
+    const other = await bridge!.sendCommand({ action: 'navigate', ...second, url: site!.url });
+    expect(nav.ok, nav.error).toBe(true);
+    expect(other.ok, other.error).toBe(true);
+    const targets = async () => {
+      const port = fs.readFileSync(path.join(userDataDir, 'DevToolsActivePort'), 'utf8').split('\n')[0];
+      const response = await fetch(`http://127.0.0.1:${port}/json/list`);
+      expect(response.ok).toBe(true);
+      return (await response.json() as Array<{ id: string }>).map(target => target.id);
+    };
+    expect(await targets()).toContain(nav.page);
+    expect(await targets()).toContain(bound.page);
+    const closed = await bridge!.sendCommand({ action: 'close-owned-tab', ...first });
+    expect(closed).toMatchObject({ ok: true, data: { tabCleanup: 'closed-owned-tab' } });
+    expect(await targets()).not.toContain(nav.page);
+    expect(await targets()).toContain(other.page);
+    expect(await targets()).toContain(bound.page);
+    expect(await bridge!.sendCommand({ action: 'close-owned-tab', ...first }))
+      .toMatchObject({ ok: true, data: { tabCleanup: 'no-owned-tab' } });
+    expect(await bridge!.sendCommand({ action: 'close-owned-tab', ...borrowed }))
+      .toMatchObject({ ok: true, data: { tabCleanup: 'no-owned-tab' } });
+    expect(await targets()).toContain(bound.page);
+    expect(await bridge!.sendCommand({ action: 'exec', ...second, page: other.page, code: 'document.title' }))
+      .toMatchObject({ ok: true });
+    expect(await bridge!.sendCommand({ action: 'close-owned-tab', ...second }))
+      .toMatchObject({ ok: true, data: { tabCleanup: 'closed-owned-tab' } });
+    expect(await targets()).not.toContain(other.page);
+    expect(await targets()).toContain(bound.page);
+  }, 60_000);
 
   it('uploads through the real extension chooser on visible and hidden inputs without changing styles', async () => {
     if (skipReason) {

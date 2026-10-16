@@ -358,11 +358,12 @@ Albato、Goofish 和 Taobao 需要从本地 adapter 子目录安装，见[安装
 ### 任务完成后关闭临时标签页
 
 设置 `export OPENCLI_CLOSE_OWNED_TAB=1` 后，一次性 adapter 命令结束时会关闭
-当前租约拥有的标签；多步浏览器任务结束时执行 `opencli browser <session> close`。
+当前租约拥有的标签；多步浏览器任务结束时执行 `opencli browser close --session <session>`。
 最后一个标签关闭后 Chrome 会自动关闭窗口，用户已有页面、其他会话和绑定的用户标签
 都会保留。默认的窗口复用策略、空闲回收、`--keep-tab true` 和持久站点会话不变；
 需要让默认持久化的 adapter 单次运行后清理时，可加 `--site-session ephemeral`。
 
-清理失败或扩展过旧时会单独输出警告，保留可重试的身份信息。应重试清理，不要重复
-已经完成的网站写入。显式 `browser close` 会报错退出；一次性 adapter 仍可能返回
+清理使用独立 action，旧扩展会在释放租约前拒绝请求。清理失败或扩展过旧时会单独
+输出警告，保留身份信息。可重试显式浏览器清理，或手动关闭残留的一次性 adapter
+标签；不要重复已经完成的网站写入。显式 `browser close` 会报错退出；一次性 adapter 仍可能返回
 已经完成的操作结果。

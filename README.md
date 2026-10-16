@@ -128,7 +128,7 @@ To remove temporary owned tabs when a workflow finishes:
 export OPENCLI_CLOSE_OWNED_TAB=1
 opencli web read --url https://example.com --stdout true
 # Multi-step browser sessions stay open between calls; close explicitly at the end:
-opencli browser research close
+opencli browser close --session research
 ```
 
 This opts into closing only the current lease's owned tab. Chrome closes its
@@ -138,9 +138,11 @@ container policy, idle expiry, `--keep-tab true`, and persistent site sessions
 remain unchanged. Use `--site-session ephemeral` for one-shot reads of adapters
 that otherwise keep a persistent site session.
 
-Cleanup requires an extension acknowledgement. If cleanup fails or the extension
-is too old, a warning reports it separately from the site action. Retry cleanup
-rather than repeating a completed write. Explicit `browser close` also exits
+Cleanup uses a dedicated action, so older extensions reject it without releasing
+the lease, and requires an extension acknowledgement. If cleanup fails or the extension
+is too old, a warning reports it separately from the site action. Retry explicit
+browser cleanup, or close a remaining one-shot adapter tab manually; do not
+repeat a completed site write. Explicit `browser close` also exits
 with an error; a one-shot adapter can still return its already-completed result.
 
 ## For AI Agents

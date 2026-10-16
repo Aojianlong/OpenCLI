@@ -390,6 +390,8 @@ function setSessionOverride(key: string, patch: SessionOverrides): void {
 
 /** Commands currently executing per lease — idle release is deferred while > 0. */
 const activeCommandCounts = new Map<string, number>();
+const closingLeases = new Set<string>();
+const closingTabs = new Set<number>();
 const LEASE_KEY_SEPARATOR = '\u0000';
 
 function getLeaseKey(session: string, surface: BrowserSurface): string {
@@ -1326,6 +1328,9 @@ async function handleCommand(cmd: Command): Promise<Result> {
   const session = getSessionName(cmd.session);
   const surface = getCommandSurface(cmd);
   const leaseKey = getLeaseKey(session, surface);
+  if (closingLeases.has(leaseKey)) {
+    return errorResult(cmd.id, new CommandFailure('session_busy', 'This session is closing; retry after cleanup finishes.'));
+  }
   if (cmd.windowMode === 'foreground' || cmd.windowMode === 'background') {
     setSessionOverride(leaseKey, { windowMode: cmd.windowMode });
   }
@@ -1354,6 +1359,7 @@ async function handleCommand(cmd: Command): Promise<Result> {
         return await handleCookies(cmd);
       case 'screenshot':
         return await handleScreenshot(cmd, leaseKey);
+      case 'close-owned-tab':
       case 'close-window':
         return await handleCloseWindow(cmd, leaseKey);
       case 'cdp':
@@ -1466,6 +1472,9 @@ function setLeaseSession(
   leaseKey: string,
   session: Omit<TargetLease, 'idleTimer' | 'idleDeadlineAt' | 'contextId' | 'ownership' | 'lifecycle' | 'windowRole'>,
 ): void {
+  if (session.preferredTabId !== null && closingTabs.has(session.preferredTabId)) {
+    throw new CommandFailure('session_busy', 'This tab is closing; wait for cleanup to finish.');
+  }
   const existing = automationSessions.get(leaseKey);
   if (existing?.idleTimer) clearTimeout(existing.idleTimer);
   const timeout = getIdleTimeout(leaseKey);
@@ -2071,33 +2080,45 @@ function stripOpenCliFrameRoutingParams(params: Record<string, unknown>, stripFr
 }
 
 async function handleCloseWindow(cmd: Command, leaseKey: string): Promise<Result> {
-  if (cmd.closeOwnedTab === true) {
+  if (cmd.action === 'close-owned-tab') {
     return withLeaseMutation(async () => {
       if ((activeCommandCounts.get(leaseKey) ?? 0) > 1) {
         throw new CommandFailure('session_busy', 'Cannot close a tab while another command is using this session.');
       }
-      const session = automationSessions.get(leaseKey);
-      if (!session?.owned) {
-        await releaseLease(leaseKey, 'explicit close');
-        return { id: cmd.id, ok: true, data: { closed: true, session: getSessionFromKey(leaseKey), tabCleanup: 'no-owned-tab' } };
+      closingLeases.add(leaseKey);
+      let closingTabId: number | undefined;
+      try {
+        const session = automationSessions.get(leaseKey);
+        if (!session?.owned) {
+          await releaseLease(leaseKey, 'explicit close');
+          return { id: cmd.id, ok: true, data: { closed: true, session: getSessionFromKey(leaseKey), tabCleanup: 'no-owned-tab' } };
+        }
+        const tabId = session.preferredTabId;
+        if (tabId === null) {
+          throw new CommandFailure('owned_tab_identity_missing', 'Cannot close an owned lease without a tab identity.');
+        }
+        if ([...automationSessions.entries()].some(([key, lease]) => key !== leaseKey && lease.preferredTabId === tabId)) {
+          throw new CommandFailure('session_busy', 'Another session also uses this tab; release that session before closing it.');
+        }
+        closingTabId = tabId;
+        closingTabs.add(tabId);
+        // Only touch the lease's tab, even if the user added pages to its window.
+        // Ungroup first so Chrome does not save the closing automation group.
+        const tab = await chrome.tabs.get(tabId);
+        if (tab.groupId !== undefined && tab.groupId !== chrome.tabGroups.TAB_GROUP_ID_NONE) {
+          await chrome.tabs.ungroup(tabId);
+        }
+        await safeDetach(tabId);
+        // Do not evict identity or forget ownership if Chrome rejects removal:
+        // the caller must be able to retry cleanup without repeating the site action.
+        await chrome.tabs.remove(tabId);
+        identity.evictTab(tabId);
+        await removeLeaseSession(leaseKey);
+        return { id: cmd.id, ok: true, data: { closed: true, session: session.session, tabCleanup: 'closed-owned-tab' } };
+      } finally {
+        closingLeases.delete(leaseKey);
+        if (closingTabId !== undefined) closingTabs.delete(closingTabId);
       }
-      const tabId = session.preferredTabId;
-      if (tabId === null) {
-        throw new CommandFailure('owned_tab_identity_missing', 'Cannot close an owned lease without a tab identity.');
-      }
-      // Only touch the lease's tab, even if the user added pages to its window.
-      // Ungroup first so Chrome does not save the closing automation group.
-      const tab = await chrome.tabs.get(tabId);
-      if (tab.groupId !== undefined && tab.groupId !== chrome.tabGroups.TAB_GROUP_ID_NONE) {
-        await chrome.tabs.ungroup(tabId);
-      }
-      await safeDetach(tabId);
-      // Do not evict identity or forget ownership if Chrome rejects removal:
-      // the caller must be able to retry cleanup without repeating the site action.
-      await chrome.tabs.remove(tabId);
-      identity.evictTab(tabId);
-      await removeLeaseSession(leaseKey);
-      return { id: cmd.id, ok: true, data: { closed: true, session: session.session, tabCleanup: 'closed-owned-tab' } };
     });
   }
   const sessionName = automationSessions.get(leaseKey)?.session ?? getSessionFromKey(leaseKey);
